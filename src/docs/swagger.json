@@ -1,0 +1,14 @@
+{
+    "openapi": "3.0.0",
+    "servers": [
+        { "url": "", "description": "DEV", "variables": {} }
+    ],
+    "info": {
+        "version": "d8944669-aee8-4194-ac5b-8461f70be415",
+        "title": "arcade-network",
+        "description": "",
+        "termsOfService": "",
+        "contact": {},
+        "license": { "name": "" }
+    }
+}
