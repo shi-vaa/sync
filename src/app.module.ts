@@ -8,18 +8,24 @@ import { AuthController } from './auth/auth.controller';
 import { AuthService } from './auth/auth.service';
 import { UserModule } from './user/user.module';
 import { PassportModule } from '@nestjs/passport';
+import { ProjectService } from './project/project.service';
+import { ProjectController } from './project/project.controller';
+import { ProjectModule } from './project/project.module';
+import { UserService } from './user/user.service';
 import { AuthModule } from './auth/auth.module';
 
 @Module({
   imports: [
     UserModule,
+    AuthModule,
     PassportModule,
     JwtModule.register({ secret: process.env.TOKEN_SECRET }),
     ConfigModule.forRoot(),
     MongooseModule.forRoot(process.env.MONGO_URI),
+    ProjectModule,
   ],
-  controllers: [AppController, AuthController],
-  providers: [AppService, AuthService],
-  exports: [AppModule, AuthModule],
+  controllers: [AppController, AuthController, ProjectController],
+  providers: [AppService, AuthService, UserService, ProjectService],
+  exports: [AppModule],
 })
 export class AppModule {}
