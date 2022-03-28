@@ -1,5 +1,5 @@
 export class ExistingUserDTO {
-    name?: string;
-    walletAddress: string;
-    roles: string[];
+  name?: string;
+  walletAddress: string;
+  roles: string[];
 }
