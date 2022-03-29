@@ -108,4 +108,5 @@ describe('ProjectController', () => {
       expect(err.message).toBe('User does not exist');
     }
   });
+  
 });
