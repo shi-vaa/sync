@@ -2,8 +2,8 @@ import { forwardRef, Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { UserSchema } from './user.schema';
 import { UserService } from './user.service';
-import { ProjectModule } from '../project/project.module';
-import { ProjectService } from '../project/project.service';
+import { ProjectModule } from 'project/project.module';
+import { ProjectService } from 'project/project.service';
 
 @Module({
   imports: [

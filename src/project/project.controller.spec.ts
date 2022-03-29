@@ -4,9 +4,9 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { Test, TestingModule } from '@nestjs/testing';
 import httpMocks from 'node-mocks-http';
 
-import { Role } from '../auth/decorators/roles.enum';
-import { UserModule } from '../user/user.module';
-import { UserService } from '../user/user.service';
+import { Role } from 'auth/decorators/roles.enum';
+import { UserModule } from 'user/user.module';
+import { UserService } from 'user/user.service';
 import { ProjectController } from './project.controller';
 import { ProjectModule } from './project.module';
 import { ProjectService } from './project.service';
@@ -108,5 +108,4 @@ describe('ProjectController', () => {
       expect(err.message).toBe('User does not exist');
     }
   });
-  
 });

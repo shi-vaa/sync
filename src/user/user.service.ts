@@ -4,8 +4,8 @@ import { Model, Schema } from 'mongoose';
 
 import { UserDocument } from './user.schema';
 import { UserDetails } from './user-details.interface';
-import { Role } from '../auth/decorators/roles.enum';
-import { ProjectService } from '../project/project.service';
+import { Role } from 'auth/decorators/roles.enum';
+import { ProjectService } from 'project/project.service';
 
 @Injectable()
 export class UserService {

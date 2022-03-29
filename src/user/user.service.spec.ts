@@ -3,9 +3,9 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { Test, TestingModule } from '@nestjs/testing';
 
 import { UserService } from './user.service';
-import { ProjectModule } from '../project/project.module';
+import { ProjectModule } from 'project/project.module';
 import { UserModule } from './user.module';
-import { ProjectService } from '../project/project.service';
+import { ProjectService } from 'project/project.service';
 import { ConfigModule } from '@nestjs/config';
 
 describe('UserService', () => {

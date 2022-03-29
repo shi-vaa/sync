@@ -1,10 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { ExistingUserDTO } from '../user/dtos/existing-user.dto';
-import { UserDetails } from '../user/user-details.interface';
-import { NewUserDTO } from '../user/dtos/new-user.dto';
-import { UserDocument } from '../user/user.schema';
-import { UserService } from '../user/user.service';
+import { ExistingUserDTO } from 'user/dtos/existing-user.dto';
+import { UserDetails } from 'user/user-details.interface';
+import { NewUserDTO } from 'user/dtos/new-user.dto';
+import { UserDocument } from 'user/user.schema';
+import { UserService } from 'user/user.service';
 
 @Injectable()
 export class AuthService {
