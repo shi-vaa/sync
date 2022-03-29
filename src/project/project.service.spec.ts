@@ -3,8 +3,8 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigModule } from '@nestjs/config';
 
-import { UserService } from '../user/user.service';
-import { UserModule } from '../user/user.module';
+import { UserService } from 'user/user.service';
+import { UserModule } from 'user/user.module';
 import { ProjectService } from './project.service';
 import { ProjectModule } from './project.module';
 

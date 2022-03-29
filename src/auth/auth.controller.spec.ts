@@ -3,17 +3,17 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { MongooseModule } from '@nestjs/mongoose';
 import { ConfigModule } from '@nestjs/config';
 
-import { NewUserDTO } from '../user/dtos/new-user.dto';
-import { UserService } from '../user/user.service';
+import { NewUserDTO } from 'user/dtos/new-user.dto';
+import { UserService } from 'user/user.service';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { Role } from './decorators/roles.enum';
 import { RolesGuard } from './decorators/roles.guard';
 import { JwtGuard } from './guards/jwt.guard';
-import { ProjectService } from '../project/project.service';
+import { ProjectService } from 'project/project.service';
 import { AuthModule } from './auth.module';
-import { UserModule } from '../user/user.module';
-import { ProjectModule } from '../project/project.module';
+import { UserModule } from 'user/user.module';
+import { ProjectModule } from 'project/project.module';
 
 describe('AuthController', () => {
   let controller: AuthController;
