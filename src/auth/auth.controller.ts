@@ -1,9 +1,11 @@
 import { Body, Controller, HttpCode, HttpStatus, Post } from '@nestjs/common';
-import { ExistingUserDTO } from '../user/dtos/existing-user.dto';
-import { NewUserDTO } from '../user/dtos/new-user.dto';
+import { ApiTags } from '@nestjs/swagger';
+import { ExistingUserDTO } from 'user/dtos/existing-user.dto';
+import { NewUserDTO } from 'user/dtos/new-user.dto';
 import { AuthService } from './auth.service';
 
 @Controller('auth')
+@ApiTags('auth')
 export class AuthController {
   constructor(private authService: AuthService) {}
 
