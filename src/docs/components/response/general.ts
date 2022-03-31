@@ -1,4 +1,4 @@
 export default {
-    success: "",
-    error: ""
-  };
+  success: '',
+  error: '',
+};

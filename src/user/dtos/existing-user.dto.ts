@@ -1,5 +1,12 @@
+import { ApiProperty } from '@nestjs/swagger';
+
 export class ExistingUserDTO {
-    name?: string;
-    walletAddress: string;
-    roles: string[];
+  @ApiProperty()
+  name?: string;
+
+  @ApiProperty()
+  walletAddress: string;
+
+  @ApiProperty()
+  roles: string[];
 }
