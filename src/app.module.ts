@@ -13,6 +13,8 @@ import { ProjectController } from './project/project.controller';
 import { ProjectModule } from './project/project.module';
 import { UserService } from './user/user.service';
 import { AuthModule } from './auth/auth.module';
+import { EventsService } from './events/events.service';
+import { EventsModule } from './events/events.module';
 
 @Module({
   imports: [
@@ -23,9 +25,10 @@ import { AuthModule } from './auth/auth.module';
     ConfigModule.forRoot(),
     MongooseModule.forRoot(process.env.MONGO_URI),
     ProjectModule,
+    EventsModule,
   ],
   controllers: [AppController, AuthController, ProjectController],
-  providers: [AppService, AuthService, UserService, ProjectService],
+  providers: [AppService, AuthService, UserService, ProjectService, EventsService],
   exports: [AppModule],
 })
 export class AppModule {}
