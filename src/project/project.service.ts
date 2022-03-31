@@ -4,6 +4,7 @@ import { InjectModel } from '@nestjs/mongoose';
 
 import { ProjectDocument } from './project.schema';
 import { UserService } from 'user/user.service';
+import { Messages } from 'utils/constants';
 
 @Injectable()
 export class ProjectService {
@@ -199,5 +200,13 @@ export class ProjectService {
 
   async deleteProjectByName(projectName: string) {
     await this.projectModel.findOneAndDelete({ name: projectName });
+  }
+
+  async getAllProjectEventIds(projectId: string) {
+    const project = await this.findByProjectId(projectId);
+
+    if (!project) {
+      throw new Error(Messages.ProjectNotFound);
+    }
   }
 }

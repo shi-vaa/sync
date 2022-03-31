@@ -15,6 +15,9 @@ import { UserService } from './user/user.service';
 import { AuthModule } from './auth/auth.module';
 import { EventsService } from './events/events.service';
 import { EventsModule } from './events/events.module';
+import { UtilsModule } from './utils/utils.module';
+
+import { AbisModule } from './abis/abis.module';
 
 @Module({
   imports: [
@@ -26,9 +29,18 @@ import { EventsModule } from './events/events.module';
     MongooseModule.forRoot(process.env.MONGO_URI),
     ProjectModule,
     EventsModule,
+    UtilsModule,
+
+    AbisModule,
   ],
   controllers: [AppController, AuthController, ProjectController],
-  providers: [AppService, AuthService, UserService, ProjectService, EventsService],
+  providers: [
+    AppService,
+    AuthService,
+    UserService,
+    ProjectService,
+    EventsService,
+  ],
   exports: [AppModule],
 })
 export class AppModule {}
