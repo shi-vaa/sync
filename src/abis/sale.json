@@ -1,0 +1,707 @@
+{
+    "abi": [
+    {
+    "inputs": [
+    {
+    "internalType": "contract IERC20",
+    "name": "_arc",
+    "type": "address"
+    }
+    ],
+    "stateMutability": "nonpayable",
+    "type": "constructor"
+    },
+    {
+    "anonymous": false,
+    "inputs": [
+    {
+    "indexed": false,
+    "internalType": "address",
+    "name": "_admin",
+    "type": "address"
+    },
+    {
+    "indexed": false,
+    "internalType": "bool",
+    "name": "_enabled",
+    "type": "bool"
+    }
+    ],
+    "name": "AdminAccessSet",
+    "type": "event"
+    },
+    {
+    "anonymous": false,
+    "inputs": [
+    {
+    "indexed": true,
+    "internalType": "contract IERC721",
+    "name": "nft",
+    "type": "address"
+    },
+    {
+    "indexed": true,
+    "internalType": "uint256",
+    "name": "nftId",
+    "type": "uint256"
+    },
+    {
+    "indexed": true,
+    "internalType": "address",
+    "name": "seller",
+    "type": "address"
+    },
+    {
+    "indexed": false,
+    "internalType": "uint256",
+    "name": "price",
+    "type": "uint256"
+    }
+    ],
+    "name": "Delisted",
+    "type": "event"
+    },
+    {
+    "anonymous": false,
+    "inputs": [
+    {
+    "indexed": true,
+    "internalType": "contract IERC721",
+    "name": "nft",
+    "type": "address"
+    },
+    {
+    "indexed": true,
+    "internalType": "uint256",
+    "name": "nftId",
+    "type": "uint256"
+    },
+    {
+    "indexed": true,
+    "internalType": "address",
+    "name": "seller",
+    "type": "address"
+    },
+    {
+    "indexed": false,
+    "internalType": "uint256",
+    "name": "price",
+    "type": "uint256"
+    }
+    ],
+    "name": "Listed",
+    "type": "event"
+    },
+    {
+    "anonymous": false,
+    "inputs": [
+    {
+    "indexed": true,
+    "internalType": "address",
+    "name": "previousOwner",
+    "type": "address"
+    },
+    {
+    "indexed": true,
+    "internalType": "address",
+    "name": "newOwner",
+    "type": "address"
+    }
+    ],
+    "name": "OwnershipTransferred",
+    "type": "event"
+    },
+    {
+    "anonymous": false,
+    "inputs": [
+    {
+    "indexed": false,
+    "internalType": "address",
+    "name": "account",
+    "type": "address"
+    }
+    ],
+    "name": "Paused",
+    "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "contract IERC721",
+          "name": "nft",
+          "type": "address"
+        },
+        {
+          "indexed": true,
+          "internalType": "uint256",
+          "name": "nftId",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "address",
+          "name": "seller",
+          "type": "address"
+        },
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "buyer",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "price",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "serviceFee",
+          "type": "uint256"
+        }
+      ],
+      "name": "Purchased",
+      "type": "event"
+    },
+    {
+    "anonymous": false,
+    "inputs": [
+    {
+    "indexed": false,
+    "internalType": "address",
+    "name": "",
+    "type": "address"
+    }
+    ],
+    "name": "SetARCToken",
+    "type": "event"
+    },
+    {
+    "anonymous": false,
+    "inputs": [
+    {
+    "indexed": false,
+    "internalType": "address",
+    "name": "",
+    "type": "address"
+    },
+    {
+    "indexed": false,
+    "internalType": "bool",
+    "name": "",
+    "type": "bool"
+    }
+    ],
+    "name": "SetAllowedNFT",
+    "type": "event"
+    },
+    {
+    "anonymous": false,
+    "inputs": [
+    {
+    "indexed": false,
+    "internalType": "uint256",
+    "name": "",
+    "type": "uint256"
+    }
+    ],
+    "name": "SetBatchLimit",
+    "type": "event"
+    },
+    {
+    "anonymous": false,
+    "inputs": [
+    {
+    "indexed": false,
+    "internalType": "bool",
+    "name": "",
+    "type": "bool"
+    }
+    ],
+    "name": "SetCheckForAllowedNFTs",
+    "type": "event"
+    },
+    {
+    "anonymous": false,
+    "inputs": [
+    {
+    "indexed": false,
+    "internalType": "uint256",
+    "name": "",
+    "type": "uint256"
+    }
+    ],
+    "name": "SetServiceFee",
+    "type": "event"
+    },
+    {
+    "anonymous": false,
+    "inputs": [
+    {
+    "indexed": false,
+    "internalType": "address",
+    "name": "account",
+    "type": "address"
+    }
+    ],
+    "name": "Unpaused",
+    "type": "event"
+    },
+    {
+    "inputs": [],
+    "name": "arc",
+    "outputs": [
+    {
+    "internalType": "contract IERC20",
+    "name": "",
+    "type": "address"
+    }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+    },
+    {
+    "inputs": [],
+    "name": "batchLimit",
+    "outputs": [
+    {
+    "internalType": "uint256",
+    "name": "",
+    "type": "uint256"
+    }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+    },
+    {
+    "inputs": [
+    {
+    "internalType": "address[]",
+    "name": "admins",
+    "type": "address[]"
+    },
+    {
+    "internalType": "bool[]",
+    "name": "enabled",
+    "type": "bool[]"
+    }
+    ],
+    "name": "batchSetAdmin",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+    },
+    {
+    "inputs": [],
+    "name": "checkForAllowedNFTs",
+    "outputs": [
+    {
+    "internalType": "bool",
+    "name": "",
+    "type": "bool"
+    }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+    },
+    {
+    "inputs": [
+    {
+    "internalType": "contract IERC721[]",
+    "name": "nfts",
+    "type": "address[]"
+    },
+    {
+    "internalType": "uint256[]",
+    "name": "nftIds",
+    "type": "uint256[]"
+    }
+    ],
+    "name": "delistBatch",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+    },
+    {
+    "inputs": [
+    {
+    "internalType": "uint256",
+    "name": "amount",
+    "type": "uint256"
+    }
+    ],
+    "name": "getFee",
+    "outputs": [
+    {
+    "internalType": "uint256",
+    "name": "fee",
+    "type": "uint256"
+    },
+    {
+    "internalType": "uint256",
+    "name": "remaining",
+    "type": "uint256"
+    }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+    },
+    {
+    "inputs": [
+    {
+    "internalType": "address",
+    "name": "_nft",
+    "type": "address"
+    },
+    {
+    "internalType": "uint256",
+    "name": "tokenId",
+    "type": "uint256"
+    },
+    {
+    "internalType": "uint256",
+    "name": "amount",
+    "type": "uint256"
+    }
+    ],
+    "name": "getRoyalty",
+    "outputs": [
+    {
+    "internalType": "address",
+    "name": "royaltyReceiver",
+    "type": "address"
+    },
+    {
+    "internalType": "uint256",
+    "name": "royaltyAmount",
+    "type": "uint256"
+    }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+    },
+    {
+    "inputs": [
+    {
+    "internalType": "address",
+    "name": "admin",
+    "type": "address"
+    }
+    ],
+    "name": "isAdmin",
+    "outputs": [
+    {
+    "internalType": "bool",
+    "name": "",
+    "type": "bool"
+    }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+    },
+    {
+    "inputs": [
+    {
+    "internalType": "address",
+    "name": "",
+    "type": "address"
+    }
+    ],
+    "name": "isAllowedNFT",
+    "outputs": [
+    {
+    "internalType": "bool",
+    "name": "",
+    "type": "bool"
+    }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+    },
+    {
+    "inputs": [
+    {
+    "internalType": "contract IERC721[]",
+    "name": "nfts",
+    "type": "address[]"
+    },
+    {
+    "internalType": "uint256[]",
+    "name": "nftIds",
+    "type": "uint256[]"
+    },
+    {
+    "internalType": "uint256[]",
+    "name": "prices",
+    "type": "uint256[]"
+    }
+    ],
+    "name": "listBatch",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+    },
+    {
+    "inputs": [],
+    "name": "owner",
+    "outputs": [
+    {
+    "internalType": "address",
+    "name": "",
+    "type": "address"
+    }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+    },
+    {
+    "inputs": [],
+    "name": "pause",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+    },
+    {
+    "inputs": [],
+    "name": "paused",
+    "outputs": [
+    {
+    "internalType": "bool",
+    "name": "",
+    "type": "bool"
+    }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+    },
+    {
+    "inputs": [
+    {
+    "internalType": "contract IERC721[]",
+    "name": "nfts",
+    "type": "address[]"
+    },
+    {
+    "internalType": "uint256[]",
+    "name": "nftIds",
+    "type": "uint256[]"
+    }
+    ],
+    "name": "purchaseBatch",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+    },
+    {
+    "inputs": [],
+    "name": "renounceOwnership",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+    },
+    {
+    "inputs": [
+    {
+    "internalType": "address",
+    "name": "",
+    "type": "address"
+    },
+    {
+    "internalType": "uint256",
+    "name": "",
+    "type": "uint256"
+    }
+    ],
+    "name": "sales",
+    "outputs": [
+    {
+    "internalType": "contract IERC721",
+    "name": "nft",
+    "type": "address"
+    },
+    {
+    "internalType": "uint256",
+    "name": "nftId",
+    "type": "uint256"
+    },
+    {
+    "internalType": "address",
+    "name": "seller",
+    "type": "address"
+    },
+    {
+    "internalType": "uint256",
+    "name": "price",
+    "type": "uint256"
+    },
+    {
+    "internalType": "uint256",
+    "name": "listTimestamp",
+    "type": "uint256"
+    },
+    {
+    "internalType": "bool",
+    "name": "isActive",
+    "type": "bool"
+    }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+    },
+    {
+    "inputs": [],
+    "name": "serviceFee",
+    "outputs": [
+    {
+    "internalType": "uint256",
+    "name": "",
+    "type": "uint256"
+    }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+    },
+    {
+    "inputs": [
+    {
+    "internalType": "contract IERC20",
+    "name": "_arc",
+    "type": "address"
+    }
+    ],
+    "name": "setARCToken",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+    },
+    {
+    "inputs": [
+    {
+    "internalType": "address",
+    "name": "admin",
+    "type": "address"
+    },
+    {
+    "internalType": "bool",
+    "name": "enabled",
+    "type": "bool"
+    }
+    ],
+    "name": "setAdmin",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+    },
+    {
+    "inputs": [
+    {
+    "internalType": "address[]",
+    "name": "nfts",
+    "type": "address[]"
+    },
+    {
+    "internalType": "bool",
+    "name": "enabled",
+    "type": "bool"
+    }
+    ],
+    "name": "setAllowedNFTBatch",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+    },
+    {
+    "inputs": [
+    {
+    "internalType": "uint256",
+    "name": "_batchLimit",
+    "type": "uint256"
+    }
+    ],
+    "name": "setBatchLimit",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+    },
+    {
+    "inputs": [
+    {
+    "internalType": "bool",
+    "name": "enabled",
+    "type": "bool"
+    }
+    ],
+    "name": "setCheckForAllowedNFTs",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+    },
+    {
+    "inputs": [
+    {
+    "internalType": "uint256",
+    "name": "_serviceFee",
+    "type": "uint256"
+    }
+    ],
+    "name": "setServiceFee",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+    },
+    {
+    "inputs": [
+    {
+    "internalType": "address",
+    "name": "newOwner",
+    "type": "address"
+    }
+    ],
+    "name": "transferOwnership",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+    },
+    {
+    "inputs": [],
+    "name": "unpause",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+    },
+    {
+    "inputs": [],
+    "name": "withdrawETH",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+    },
+    {
+    "inputs": [
+    {
+    "internalType": "address",
+    "name": "tokenAddress",
+    "type": "address"
+    },
+    {
+    "internalType": "uint256",
+    "name": "amount",
+    "type": "uint256"
+    },
+    {
+    "internalType": "address",
+    "name": "wallet",
+    "type": "address"
+    }
+    ],
+    "name": "withdrawFunds",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+    }
+    ]
+    }

@@ -34,8 +34,6 @@ import { ProjectService } from './project.service';
 export class ProjectController {
   constructor(private projectService: ProjectService) {}
 
-  @Roles(Role.Member, Role.Admin)
-  @UseGuards(AuthGuard('jwt'), RolesGuard)
   @Post('create')
   @ApiCreatedResponse({
     description: constants.CREATED.description,
@@ -59,8 +57,6 @@ export class ProjectController {
     }
   }
 
-  @Roles(Role.Admin)
-  @UseGuards(AuthGuard('jwt'), RolesGuard)
   @HttpCode(HttpStatus.OK)
   @Post('members/add')
   @ApiCreatedResponse({
@@ -85,8 +81,6 @@ export class ProjectController {
     }
   }
 
-  @Roles(Role.Admin)
-  @UseGuards(AuthGuard('jwt'), RolesGuard)
   @Post('members/remove')
   @HttpCode(HttpStatus.OK)
   @ApiCreatedResponse({
@@ -111,8 +105,6 @@ export class ProjectController {
     }
   }
 
-  @Roles(Role.Admin)
-  @UseGuards(AuthGuard('jwt'), RolesGuard)
   @Post('remove')
   @HttpCode(HttpStatus.OK)
   @ApiCreatedResponse({
@@ -137,8 +129,6 @@ export class ProjectController {
     }
   }
 
-  @Roles(Role.Member, Role.Admin)
-  @UseGuards(AuthGuard('jwt'), RolesGuard)
   @Get('info/:projectId')
   @HttpCode(HttpStatus.OK)
   @ApiCreatedResponse({
