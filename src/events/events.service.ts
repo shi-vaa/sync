@@ -1,11 +1,19 @@
 import { Injectable } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
+import {
+  InjectModel,
+  MongooseModule,
+  Prop,
+  Schema,
+  SchemaFactory,
+} from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { ethers, utils } from 'ethers';
 
 import { getWeb3 } from 'utils/web3';
 import { EventDocument } from './events.schema';
 import { ProjectService } from 'project/project.service';
+import { Messages } from 'utils/constants';
+import mongoose from 'mongoose';
 
 @Injectable()
 export class EventsService {
@@ -16,36 +24,54 @@ export class EventsService {
 
   async createEventsCollectionFromProjectEvents(
     txnHash: string,
-    event: EventDocument,
+    // event: EventDocument,
+    abi: any,
+    contract_address: string,
     projectName: string,
   ) {
     const { polygonWeb3 } = await getWeb3();
-    const result = await polygonWeb3.eth.getTransactionReceipt(txnHash);
-    const ethNftInterface = new ethers.utils.Interface([...event.abi]);
+    const txnReceipt = await polygonWeb3.eth.getTransactionReceipt(txnHash);
+    const ethNftInterface = new ethers.utils.Interface([...abi]);
 
-    const query = result.logs
+    const query = txnReceipt.logs
       .filter(
-        (each) =>
-          each.address.toLowerCase() === event.contract_address.toLowerCase(),
+        (each) => each.address.toLowerCase() === contract_address.toLowerCase(),
       )
-      .map((each) => ethNftInterface.parseLog(each))
-      .map((each) => console.log('from txn receipts: ', each));
+      // .map((each) => ethNftInterface.parseLog(each))
+      .map(async (each) => {
+        const schema = new mongoose.Schema({
+          logs: { type: Object, required: true },
+        });
+
+        const collectionName = `${projectName}_${contract_address}`;
+
+        let model;
+
+        await mongoose
+          .connect(process.env.MONGO_URI)
+          .then(() => console.log('connected'))
+          .catch((err) => console.error(err));
+
+        if (mongoose.models[`${collectionName}`]) {
+          model = mongoose.model(collectionName);
+        } else {
+          model = mongoose.model(collectionName, schema);
+        }
+
+        const collection = new model({ logs: each });
+        await collection.save();
+      });
   }
 
   async getAllEvents() {
     return this.eventsModel.find();
   }
 
-  async test(contract_address: string, abi: object) {
+  async test(contract_address: string, abi: object, projectName: string) {
     const provider = new ethers.providers.JsonRpcProvider(
       'https://speedy-nodes-nyc.moralis.io/61fac31e1c1f5ff3bf1058c6/polygon/mumbai',
     );
 
-    // const ERC20_ABI = [
-    //   'event Listed(address nft, uint256 nftId, address seller, uint256 price)',
-    // ];
-
-    // const address = '0xD68603215c4646386d2e0bE68a38027CE4a7652d';
     const contract = new ethers.Contract(
       contract_address,
       abi as any,
@@ -66,6 +92,33 @@ export class EventsService {
     provider.on('error', (err) => console.error(err));
 
     const listedEvents = await contract.queryFilter('Listed' as any);
+
+    const { polygonWeb3 } = await getWeb3();
+
+    const project = await this.projectService.findByProjectName(projectName);
+
+    if (!project) {
+      throw new Error(Messages.ProjectNotFound);
+    }
+
+    // listedEvents.map(async (event) => {
+    //   const result = await polygonWeb3.eth.getTransactionReceipt(
+    //     event.transactionHash,
+    //   );
+    //   console.log(
+    //     'receipt: ',
+    //     result.logs.filter((log) => log.address === contract_address),
+    //   );
+    // });
+
+    listedEvents.map(async (event) => {
+      await this.createEventsCollectionFromProjectEvents(
+        event.transactionHash,
+        abi,
+        contract_address,
+        projectName,
+      );
+    });
 
     return listedEvents;
   }
