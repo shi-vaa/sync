@@ -30,6 +30,7 @@ import { RemoveProjectMemberDTO } from './dtos/remove-project-member';
 import { ProjectService } from './project.service';
 import { AddEventDTO } from './dtos/add-project-event';
 import { EventsService } from 'events/events.service';
+import { removeEventDTO } from './dtos/remove-project-event';
 
 @Controller('project')
 @ApiTags('projects')
@@ -156,14 +157,43 @@ export class ProjectController {
   }
 
   @Post('/events/add')
-  @HttpCode(HttpStatus.OK)
   @ApiCreatedResponse({
     description: constants.OK.description,
   })
   async addEventToProject(@Body() addEventDetails: AddEventDTO) {
     try {
-      const { topic, projectId } = addEventDetails;
-      await this.projectService.addEvent(topic, projectId);
+      const {
+        topic,
+        projectName,
+        chain_id,
+        contract_address,
+        abi,
+        webhook_url,
+        sync_historical_data = false,
+      } = addEventDetails;
+      await this.projectService.addEvent(
+        topic,
+        projectName,
+        chain_id,
+        contract_address,
+        webhook_url,
+        abi,
+        sync_historical_data,
+      );
+    } catch (err) {
+      throw new BadRequestException(err.message);
+    }
+  }
+
+  @Post('/events/remove')
+  @HttpCode(HttpStatus.OK)
+  @ApiCreatedResponse({
+    description: constants.OK.description,
+  })
+  async removeEventFromProject(@Body() removeEventDetails: removeEventDTO) {
+    try {
+      const { topic, projectName } = removeEventDetails;
+      await this.projectService.removeEvent(topic, projectName);
     } catch (err) {
       throw new BadRequestException(err.message);
     }
