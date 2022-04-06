@@ -220,7 +220,7 @@ export class ProjectService {
     contract_address: string,
     webhook_url: string,
     abi: object,
-    sync_historical_data: boolean = false,
+    sync_historical_data = false,
   ) {
     const project = await this.findByProjectName(projectName);
     const existingEvent = await this.eventModel.findOne({ topic });
@@ -262,6 +262,8 @@ export class ProjectService {
     if (!project) {
       throw new Error(Messages.ProjectNotFound);
     }
+
+    await this.eventModel.findOneAndDelete({ topic });
 
     this.projectModel.updateOne(
       { name: projectName },

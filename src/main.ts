@@ -32,9 +32,6 @@ async function bootstrap() {
     provider,
   );
 
-  // contract.on('Listed', (args) => console.log('contract: ', args));
-  // contract.on('Delisted', (args) => console.log('contract: ', args));
-
   const service = app.get<EventsService>(EventsService);
   await service.attachAllEventListeners(contract);
 }

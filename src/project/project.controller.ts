@@ -14,6 +14,7 @@ import { AuthGuard } from '@nestjs/passport';
 import {
   ApiBadRequestResponse,
   ApiCreatedResponse,
+  ApiOkResponse,
   ApiTags,
 } from '@nestjs/swagger';
 
@@ -134,7 +135,7 @@ export class ProjectController {
 
   @Get('info/:projectId')
   @HttpCode(HttpStatus.OK)
-  @ApiCreatedResponse({
+  @ApiOkResponse({
     description: constants.OK.description,
     type: ExistingProjectDTO,
   })

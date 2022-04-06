@@ -1,20 +1,14 @@
-import { forwardRef, Inject, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import mongoose from 'mongoose';
-import { ethers, utils } from 'ethers';
+import { ethers } from 'ethers';
 
 import { getWeb3 } from 'utils/web3';
 import { EventDocument } from './events.schema';
 import { ProjectService } from 'project/project.service';
 import { Messages } from 'utils/constants';
 import SalesAbi from 'abis/sale.json';
-
-// TO DO
-
-// connecting to mongo in a loop? - expensive
-// change method/variable names
-// remove console log lines
 
 @Injectable()
 export class EventsService {
@@ -25,7 +19,6 @@ export class EventsService {
 
   async createEventsCollectionFromProjectEvents(
     txnHash: string,
-    // event: EventDocument,
     abi: any,
     contract_address: string,
     projectName: string,
@@ -67,37 +60,40 @@ export class EventsService {
     return this.eventsModel.find();
   }
 
-  async test(contract_address: string, abi: object, projectName: string) {
+  async syncEvents() {
+    const events = await this.getAllEvents();
     const provider = new ethers.providers.JsonRpcProvider(
       'https://speedy-nodes-nyc.moralis.io/61fac31e1c1f5ff3bf1058c6/polygon/mumbai',
     );
 
-    const contract = new ethers.Contract(
-      contract_address,
-      abi as any,
-      provider,
-    );
-
-    provider.on('error', (err) => console.error(err));
-
-    const listedEvents = await contract.queryFilter('Listed' as any);
-
-    const project = await this.projectService.findByProjectName(projectName);
-
-    if (!project) {
-      throw new Error(Messages.ProjectNotFound);
-    }
-
-    listedEvents.map(async (event) => {
-      await this.createEventsCollectionFromProjectEvents(
-        event.transactionHash,
-        abi,
-        contract_address,
-        projectName,
+    events.forEach(async (event) => {
+      const contract = new ethers.Contract(
+        event.contract_address,
+        event.abi as any,
+        provider,
       );
-    });
 
-    return listedEvents;
+      provider.on('error', (err) => console.error(err));
+
+      const listedEvents = await contract.queryFilter([event.topic] as any);
+
+      const project = await this.projectService.findByProjectName(
+        event.projectName,
+      );
+
+      if (!project) {
+        throw new Error(Messages.ProjectNotFound);
+      }
+
+      listedEvents.map(async (listedEvent) => {
+        await this.createEventsCollectionFromProjectEvents(
+          listedEvent.transactionHash,
+          event.abi,
+          event.contract_address,
+          event.projectName,
+        );
+      });
+    });
   }
 
   async findByEventTopic(topic: string) {
@@ -105,7 +101,7 @@ export class EventsService {
   }
 
   async attachAllEventListeners(contract: ethers.Contract) {
-    const events = await this.eventsModel.find();
+    const events = await this.getAllEvents();
 
     events.forEach((event) => {
       contract.on(event.topic, (...args) => {
@@ -115,7 +111,7 @@ export class EventsService {
           transaction.transactionHash,
           event.abi,
           event.contract_address,
-          'project-1',
+          event.projectName,
         );
       });
     });

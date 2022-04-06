@@ -1,23 +1,45 @@
-import { Controller, Get, Inject, Req } from '@nestjs/common';
+import {
+  BadRequestException,
+  Body,
+  Controller,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Inject,
+  Post,
+  Query,
+  Req,
+} from '@nestjs/common';
+import {
+  ApiBadRequestResponse,
+  ApiOkResponse,
+  ApiResponse,
+} from '@nestjs/swagger';
+import constants from 'docs/constants';
+import { BadRequestDTO } from 'project/dtos/error';
+import { Messages } from 'utils/constants';
+import { SyncEventsDTO } from './dtos/sync-events';
 import { EventsService } from './events.service';
 
 @Controller('events')
 export class EventsController {
   constructor(private readonly eventsService: EventsService) {}
 
-  @Get('test')
-  test(@Req() req) {
-    const { projectName } = req.query;
+  @Get('sync')
+  @ApiOkResponse({
+    description: constants.OK.description,
+  })
+  @ApiBadRequestResponse({
+    description: constants.BAD_REQUEST.description,
+    type: BadRequestDTO,
+  })
+  async syncEvents() {
+    try {
+      await this.eventsService.syncEvents();
 
-    const ERC20_ABI = [
-      'event Listed(address nft, uint256 nftId, address seller, uint256 price)',
-      'event Delisted(address nft, uint256 nftId, address seller, uint256 price)',
-    ];
-
-    return this.eventsService.test(
-      '0xD68603215c4646386d2e0bE68a38027CE4a7652d',
-      ERC20_ABI,
-      projectName,
-    );
+      return Messages.EventsSyncSuccess;
+    } catch (err) {
+      throw new BadRequestException(err.message);
+    }
   }
 }
