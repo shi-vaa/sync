@@ -1,19 +1,20 @@
-import { Injectable } from '@nestjs/common';
-import {
-  InjectModel,
-  MongooseModule,
-  Prop,
-  Schema,
-  SchemaFactory,
-} from '@nestjs/mongoose';
+import { forwardRef, Inject, Injectable } from '@nestjs/common';
+import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
+import mongoose from 'mongoose';
 import { ethers, utils } from 'ethers';
 
 import { getWeb3 } from 'utils/web3';
 import { EventDocument } from './events.schema';
 import { ProjectService } from 'project/project.service';
 import { Messages } from 'utils/constants';
-import mongoose from 'mongoose';
+import SalesAbi from 'abis/sale.json';
+
+// TO DO
+
+// connecting to mongo in a loop? - expensive
+// change method/variable names
+// remove console log lines
 
 @Injectable()
 export class EventsService {
@@ -31,13 +32,13 @@ export class EventsService {
   ) {
     const { polygonWeb3 } = await getWeb3();
     const txnReceipt = await polygonWeb3.eth.getTransactionReceipt(txnHash);
-    const ethNftInterface = new ethers.utils.Interface([...abi]);
+    const ethNftInterface = new ethers.utils.Interface([...SalesAbi.abi]);
 
-    const query = txnReceipt.logs
+    txnReceipt.logs
       .filter(
         (each) => each.address.toLowerCase() === contract_address.toLowerCase(),
       )
-      // .map((each) => ethNftInterface.parseLog(each))
+      .map((each) => ethNftInterface.parseLog(each))
       .map(async (each) => {
         const schema = new mongoose.Schema({
           logs: { type: Object, required: true },
@@ -49,7 +50,6 @@ export class EventsService {
 
         await mongoose
           .connect(process.env.MONGO_URI)
-          .then(() => console.log('connected'))
           .catch((err) => console.error(err));
 
         if (mongoose.models[`${collectionName}`]) {
@@ -78,38 +78,15 @@ export class EventsService {
       provider,
     );
 
-    const filter = {
-      address: contract_address,
-      topics: [utils.id('Listed(address,uint256,address,uint256)')],
-    };
-
-    const block = await provider.getBlockNumber();
-
-    provider.on(filter, (log) => {
-      console.log(log);
-    });
-
     provider.on('error', (err) => console.error(err));
 
     const listedEvents = await contract.queryFilter('Listed' as any);
-
-    const { polygonWeb3 } = await getWeb3();
 
     const project = await this.projectService.findByProjectName(projectName);
 
     if (!project) {
       throw new Error(Messages.ProjectNotFound);
     }
-
-    // listedEvents.map(async (event) => {
-    //   const result = await polygonWeb3.eth.getTransactionReceipt(
-    //     event.transactionHash,
-    //   );
-    //   console.log(
-    //     'receipt: ',
-    //     result.logs.filter((log) => log.address === contract_address),
-    //   );
-    // });
 
     listedEvents.map(async (event) => {
       await this.createEventsCollectionFromProjectEvents(
@@ -121,5 +98,9 @@ export class EventsService {
     });
 
     return listedEvents;
+  }
+
+  async findByEventTopic(topic: string) {
+    return this.eventsModel.findOne({ topic });
   }
 }

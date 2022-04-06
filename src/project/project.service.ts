@@ -5,12 +5,15 @@ import { InjectModel } from '@nestjs/mongoose';
 import { ProjectDocument } from './project.schema';
 import { UserService } from 'user/user.service';
 import { Messages } from 'utils/constants';
+import { EventDocument } from 'events/events.schema';
 
 @Injectable()
 export class ProjectService {
   constructor(
     @InjectModel('Project')
     private readonly projectModel: Model<ProjectDocument>,
+    @InjectModel('Event')
+    private readonly eventtModel: Model<EventDocument>,
     @Inject(forwardRef(() => UserService))
     private readonly userService: UserService,
   ) {}
@@ -208,5 +211,19 @@ export class ProjectService {
     if (!project) {
       throw new Error(Messages.ProjectNotFound);
     }
+  }
+
+  async addEvent(topic: string, projectId: string) {
+    const event = await this.eventtModel.findOne({ topic });
+
+    if (!event) {
+      throw new Error(Messages.EventNotFound);
+    }
+
+    await this.projectModel.updateOne(
+      { _id: projectId },
+      { $push: { event_ids: event._id } },
+      { upsert: false },
+    );
   }
 }

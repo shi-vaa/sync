@@ -28,6 +28,8 @@ import { ExistingProjectDTO } from './dtos/existing-project';
 import { ProjectDetailsDTO } from './dtos/project-details';
 import { RemoveProjectMemberDTO } from './dtos/remove-project-member';
 import { ProjectService } from './project.service';
+import { AddEventDTO } from './dtos/add-project-event';
+import { EventsService } from 'events/events.service';
 
 @Controller('project')
 @ApiTags('projects')
@@ -148,6 +150,20 @@ export class ProjectController {
 
     try {
       return this.projectService.getProjectDetails(projectId, user.id);
+    } catch (err) {
+      throw new BadRequestException(err.message);
+    }
+  }
+
+  @Post('/events/add')
+  @HttpCode(HttpStatus.OK)
+  @ApiCreatedResponse({
+    description: constants.OK.description,
+  })
+  async addEventToProject(@Body() addEventDetails: AddEventDTO) {
+    try {
+      const { topic, projectId } = addEventDetails;
+      await this.projectService.addEvent(topic, projectId);
     } catch (err) {
       throw new BadRequestException(err.message);
     }
