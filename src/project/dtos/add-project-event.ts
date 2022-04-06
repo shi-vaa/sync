@@ -5,5 +5,5 @@ export class AddEventDTO {
   contract_address: string;
   webhook_url: string;
   abi: object;
-  sync_historical_data: boolean = false;
+  sync_historical_data = false;
 }
