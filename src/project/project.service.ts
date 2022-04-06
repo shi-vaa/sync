@@ -13,7 +13,7 @@ export class ProjectService {
     @InjectModel('Project')
     private readonly projectModel: Model<ProjectDocument>,
     @InjectModel('Event')
-    private readonly eventtModel: Model<EventDocument>,
+    private readonly eventModel: Model<EventDocument>,
     @Inject(forwardRef(() => UserService))
     private readonly userService: UserService,
   ) {}
@@ -213,17 +213,59 @@ export class ProjectService {
     }
   }
 
-  async addEvent(topic: string, projectId: string) {
-    const event = await this.eventtModel.findOne({ topic });
+  async addEvent(
+    topic: string,
+    projectName: string,
+    chain_id: string,
+    contract_address: string,
+    webhook_url: string,
+    abi: object,
+    sync_historical_data: boolean = false,
+  ) {
+    const project = await this.findByProjectName(projectName);
+    const existingEvent = await this.eventModel.findOne({ topic });
+
+    if (existingEvent) {
+      throw new Error(Messages.EventExists);
+    }
+
+    if (!project) {
+      throw new Error(Messages.ProjectNotFound);
+    }
+
+    const newEvent = new this.eventModel({
+      topic,
+      projectName,
+      chain_id,
+      contract_address,
+      webhook_url,
+      abi,
+      sync_historical_data,
+    });
+
+    const event = await newEvent.save();
+
+    this.projectModel.updateOne(
+      { name: projectName },
+      { $push: { event_ids: event._id } },
+    );
+  }
+
+  async removeEvent(topic: string, projectName: string) {
+    const project = await this.findByProjectName(projectName);
+    const event = await this.eventModel.findOne({ topic });
 
     if (!event) {
       throw new Error(Messages.EventNotFound);
     }
 
-    await this.projectModel.updateOne(
-      { _id: projectId },
-      { $push: { event_ids: event._id } },
-      { upsert: false },
+    if (!project) {
+      throw new Error(Messages.ProjectNotFound);
+    }
+
+    this.projectModel.updateOne(
+      { name: projectName },
+      { $pull: { event_ids: event._id } },
     );
   }
 }
