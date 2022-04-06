@@ -9,6 +9,7 @@ import { ProjectService } from 'project/project.service';
   imports: [
     MongooseModule.forFeature([{ name: 'User', schema: UserSchema }]),
     forwardRef(() => ProjectModule),
+    
   ],
   providers: [UserService, ProjectService],
 

@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { AbisModule } from 'abis/abis.module';
 import { ProjectModule } from 'project/project.module';
@@ -13,13 +13,14 @@ import { EventsService } from './events.service';
   imports: [
     AbisModule,
     MongooseModule.forFeature([{ name: 'Event', schema: EventSchema }]),
-    ProjectModule,
     UserModule,
+    ProjectModule,
   ],
   controllers: [EventsController],
   providers: [EventsService, ProjectService, UserService],
   exports: [
     MongooseModule.forFeature([{ name: 'Event', schema: EventSchema }]),
+    EventsModule,
   ],
 })
 export class EventsModule {}

@@ -11,6 +11,7 @@ export class EventsController {
 
     const ERC20_ABI = [
       'event Listed(address nft, uint256 nftId, address seller, uint256 price)',
+      "event Delisted(address nft, uint256 nftId, address seller, uint256 price)"
     ];
 
     return this.eventsService.test(
