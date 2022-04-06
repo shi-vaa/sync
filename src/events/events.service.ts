@@ -103,4 +103,21 @@ export class EventsService {
   async findByEventTopic(topic: string) {
     return this.eventsModel.findOne({ topic });
   }
+
+  async attachAllEventListeners(contract: ethers.Contract) {
+    const events = await this.eventsModel.find();
+
+    events.forEach((event) => {
+      contract.on(event.topic, (...args) => {
+        console.log(args);
+        const transaction = args[args.length - 1];
+        this.createEventsCollectionFromProjectEvents(
+          transaction.transactionHash,
+          event.abi,
+          event.contract_address,
+          'project-1',
+        );
+      });
+    });
+  }
 }

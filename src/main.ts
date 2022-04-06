@@ -4,6 +4,7 @@ import { ethers } from 'ethers';
 import { UserService } from 'user/user.service';
 import { AppModule } from './app.module';
 import SalesAbi from 'abis/sale.json';
+import { EventsService } from 'events/events.service';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -31,7 +32,10 @@ async function bootstrap() {
     provider,
   );
 
-  contract.on('Listed', (args) => console.log('contract: ', args));
-  contract.on('Delisted', (args) => console.log('contract: ', args));
+  // contract.on('Listed', (args) => console.log('contract: ', args));
+  // contract.on('Delisted', (args) => console.log('contract: ', args));
+
+  const service = app.get<EventsService>(EventsService);
+  await service.attachAllEventListeners(contract);
 }
 bootstrap();
