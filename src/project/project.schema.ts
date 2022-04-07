@@ -13,20 +13,20 @@ class Project {
   @Prop()
   description: string;
 
-  @Prop({ required: true })
+  @Prop()
   members: schema.Types.ObjectId[];
 
-  @Prop({ required: true })
+  @Prop()
   admins: schema.Types.ObjectId[];
 
   @Prop({ required: true })
   env: env;
 
-  @Prop({ required: true })
+  @Prop()
   event_ids: ObjectId[];
 
   @Prop({ required: true })
-  rpcs: RPC[];
+  rpcs: string[];
 }
 
 export const ProjectSchema = SchemaFactory.createForClass(Project);

@@ -33,6 +33,8 @@ async function bootstrap() {
   );
 
   const service = app.get<EventsService>(EventsService);
+
+  await service.syncEvents();
   await service.attachAllEventListeners(contract);
 }
 bootstrap();

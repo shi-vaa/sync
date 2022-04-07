@@ -56,23 +56,23 @@ export class UserService {
     }
   }
 
-  async addToProject(userId: string, projectId: string) {
-    const project = await this.projectService.findByProjectId(projectId);
-    const member = await this.findByUserId(userId);
+  // async addToProject(userId: string, projectId: string) {
+  //   const project = await this.projectService.findByProjectId(projectId);
+  //   const member = await this.findByUserId(userId);
 
-    if (!member) {
-      throw new Error('User does not exist');
-    }
+  //   if (!member) {
+  //     throw new Error('User does not exist');
+  //   }
 
-    if (!project) {
-      throw new Error('Project does not exist');
-    }
+  //   if (!project) {
+  //     throw new Error('Project does not exist');
+  //   }
 
-    await this.userModel.updateOne(
-      { _id: userId },
-      { $addToSet: { projects: projectId } },
-    );
-  }
+  //   await this.userModel.updateOne(
+  //     { _id: userId },
+  //     { $addToSet: { projects: projectId } },
+  //   );
+  // }
 
   async removeFromProject(userId: string, projectId: string) {
     const project = await this.projectService.findByProjectId(projectId);

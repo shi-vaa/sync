@@ -1,6 +1,7 @@
 export class AddEventDTO {
+  name: string;
   topic: string;
-  projectName: string;
+  projectId: string;
   chain_id: string;
   contract_address: string;
   webhook_url: string;
