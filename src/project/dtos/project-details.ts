@@ -2,5 +2,5 @@ import { ApiProperty } from '@nestjs/swagger';
 
 export class ProjectDetailsDTO {
   @ApiProperty()
-  projectId: string;
+  projectName: string;
 }

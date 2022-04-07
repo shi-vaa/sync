@@ -6,6 +6,7 @@ import { ProjectDocument } from './project.schema';
 import { UserService } from 'user/user.service';
 import { Messages } from 'utils/constants';
 import { EventDocument } from 'events/events.schema';
+import { env } from 'types/env';
 
 @Injectable()
 export class ProjectService {
@@ -19,36 +20,25 @@ export class ProjectService {
   ) {}
 
   async create(
-    creatorId: string,
     name: string,
+    env: env,
+    rpcs: string[],
     description?: string,
   ): Promise<ProjectDocument> {
-    const creator = await this.userService.findByUserId(creatorId);
-
     const existingProject = await this.projectModel.findOne({ name }).exec();
-
-    if (!creator) {
-      throw new Error('User does not exist');
-    }
 
     if (existingProject) {
       throw new Error('Project already exisits');
     }
 
-    await this.userService.makeAdmin(creatorId);
     const newProject = await new this.projectModel({
       name,
       description,
-      members: [creatorId],
-      admins: [creatorId],
+      env,
+      rpcs,
     });
 
     const createdProject = await newProject.save();
-
-    await this.userService.addToProject(
-      creatorId,
-      createdProject._id.toString(),
-    );
 
     return createdProject;
   }
@@ -63,35 +53,28 @@ export class ProjectService {
 
   async addMember(projectId: string, adminId: string, memberId: string) {
     const project = await this.projectModel.findById(projectId);
-    const admin = await this.userService.findByUserId(adminId);
     const member = await this.userService.findByUserId(memberId);
 
-    if (!admin || !member) {
+    if (!member) {
       throw new Error('User does not exist');
     }
 
     if (!project) {
       throw new Error('Project does not exist');
-    }
-
-    if (await !this.isAdminOfProject(adminId, null, project)) {
-      throw new Error('User is not an admin');
     }
 
     await this.projectModel.updateOne(
       { _id: projectId },
       { $addToSet: { members: memberId } },
     );
-
-    await this.userService.addToProject(memberId, projectId);
   }
 
   async removeMember(projectId: string, adminId: string, memberId: string) {
     const project = await this.projectModel.findById(projectId);
-    const admin = await this.userService.findByUserId(adminId);
+    // const admin = await this.userService.findByUserId(adminId);
     const member = await this.userService.findByUserId(memberId);
 
-    if (!admin || !member) {
+    if (!member) {
       throw new Error('User does not exist');
     }
 
@@ -99,9 +82,9 @@ export class ProjectService {
       throw new Error('Project does not exist');
     }
 
-    if (await !this.isAdminOfProject(adminId, null, project)) {
-      throw new Error('User is not an admin');
-    }
+    // if (await !this.isAdminOfProject(adminId, null, project)) {
+    //   throw new Error('User is not an admin');
+    // }
 
     await this.userService.removeFromProject(memberId, projectId);
 
@@ -113,55 +96,24 @@ export class ProjectService {
     }
   }
 
-  async removeProject(projectId: string, adminId: string) {
-    const project = await this.projectModel.findById(projectId);
-    const admin = await this.userService.findByUserId(adminId);
-
-    if (!admin) {
-      throw new Error('User does not exist');
-    }
+  async removeProject(projectName: string) {
+    const project = await this.findByProjectName(projectName);
 
     if (!project) {
       throw new Error('Project does not exist');
     }
 
-    if (await !this.isAdminOfProject(adminId, null, project)) {
-      throw new Error('User is not an admin');
-    }
-
-    project.members.forEach(
-      async (memberId) =>
-        await this.userService.removeFromProject(
-          memberId.toString(),
-          projectId,
-        ),
+    project.event_ids.forEach(
+      async (id) => await this.eventModel.findOneAndDelete({ _id: id }),
     );
-
-    project.admins.forEach(
-      async (adminId) =>
-        await this.userService.removeFromProject(adminId.toString(), projectId),
-    );
-
-    await this.deleteProjectById(projectId);
+    await this.deleteProjectByName(projectName);
   }
 
-  async getProjectDetails(
-    projectId: string,
-    userId: string,
-  ): Promise<ProjectDocument> {
-    const project = await this.findByProjectId(projectId);
-    const user = await this.userService.findByUserId(userId);
+  async getProjectDetails(projectName: string): Promise<ProjectDocument> {
+    const project = await this.findByProjectName(projectName);
 
     if (!project) {
       throw new Error('Project does not exist');
-    }
-
-    if (!user) {
-      throw new Error('User does not exist');
-    }
-
-    if (await !this.isUserPartOfProject(userId, null, project)) {
-      throw new Error('User is not a project member');
     }
 
     return project;
@@ -214,15 +166,16 @@ export class ProjectService {
   }
 
   async addEvent(
+    name: string,
     topic: string,
-    projectName: string,
+    projectId: string,
     chain_id: string,
     contract_address: string,
     webhook_url: string,
     abi: object,
     sync_historical_data = false,
   ) {
-    const project = await this.findByProjectName(projectName);
+    const project = await this.findByProjectId(projectId);
     const existingEvent = await this.eventModel.findOne({ topic });
 
     if (existingEvent) {
@@ -234,25 +187,26 @@ export class ProjectService {
     }
 
     const newEvent = new this.eventModel({
+      name,
       topic,
-      projectName,
+      projectId,
       chain_id,
       contract_address,
       webhook_url,
-      abi,
+      abi: JSON.stringify(abi),
       sync_historical_data,
     });
 
     const event = await newEvent.save();
 
-    this.projectModel.updateOne(
-      { name: projectName },
+    await this.projectModel.updateOne(
+      { _id: projectId },
       { $push: { event_ids: event._id } },
     );
   }
 
-  async removeEvent(topic: string, projectName: string) {
-    const project = await this.findByProjectName(projectName);
+  async removeEvent(topic: string, projectId: string) {
+    const project = await this.findByProjectId(projectId);
     const event = await this.eventModel.findOne({ topic });
 
     if (!event) {
@@ -266,7 +220,7 @@ export class ProjectService {
     await this.eventModel.findOneAndDelete({ topic });
 
     this.projectModel.updateOne(
-      { name: projectName },
+      { _id: projectId },
       { $pull: { event_ids: event._id } },
     );
   }

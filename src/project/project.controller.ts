@@ -33,7 +33,7 @@ import { AddEventDTO } from './dtos/add-project-event';
 import { EventsService } from 'events/events.service';
 import { removeEventDTO } from './dtos/remove-project-event';
 
-@Controller('project')
+@Controller('projects')
 @ApiTags('projects')
 export class ProjectController {
   constructor(private projectService: ProjectService) {}
@@ -51,59 +51,10 @@ export class ProjectController {
     @Body() createProjectDto: CreateProjectDTO,
     @Req() req,
   ): Promise<ExistingProjectDTO> {
-    const { name, description } = createProjectDto;
-    const { user } = req;
+    const { name, env, rpcs, description } = createProjectDto;
 
     try {
-      return this.projectService.create(user.id, name, description);
-    } catch (err) {
-      throw new BadRequestException(err.message);
-    }
-  }
-
-  @HttpCode(HttpStatus.OK)
-  @Post('members/add')
-  @ApiCreatedResponse({
-    description: constants.OK.description,
-  })
-  @ApiBadRequestResponse({
-    description: constants.BAD_REQUEST.description,
-    type: BadRequestDTO,
-  })
-  async addMember(
-    @Body()
-    addProjectMemberDto: AddProjectMemberDTO,
-    @Req() req,
-  ) {
-    const { projectId, memberId } = addProjectMemberDto;
-    const { user } = req;
-
-    try {
-      return this.projectService.addMember(projectId, user.id, memberId);
-    } catch (err) {
-      throw new BadRequestException(err.message);
-    }
-  }
-
-  @Post('members/remove')
-  @HttpCode(HttpStatus.OK)
-  @ApiCreatedResponse({
-    description: constants.OK.description,
-  })
-  @ApiBadRequestResponse({
-    description: constants.BAD_REQUEST.description,
-    type: BadRequestDTO,
-  })
-  async removeMember(
-    @Body()
-    removeProjectMemberDto: RemoveProjectMemberDTO,
-    @Req() req,
-  ) {
-    const { projectId, memberId } = removeProjectMemberDto;
-    const { user } = req;
-
-    try {
-      return this.projectService.removeMember(projectId, user.id, memberId);
+      return this.projectService.create(name, env, rpcs, description);
     } catch (err) {
       throw new BadRequestException(err.message);
     }
@@ -121,19 +72,17 @@ export class ProjectController {
   async removeProject(
     @Body()
     projectDetails: ProjectDetailsDTO,
-    @Req() req,
   ) {
-    const { projectId } = projectDetails;
-    const { user } = req;
+    const { projectName } = projectDetails;
 
     try {
-      return this.projectService.removeProject(projectId, user.id);
+      return this.projectService.removeProject(projectName);
     } catch (err) {
       throw new BadRequestException(err.message);
     }
   }
 
-  @Get('info/:projectId')
+  @Get('info/:projectName')
   @HttpCode(HttpStatus.OK)
   @ApiOkResponse({
     description: constants.OK.description,
@@ -145,13 +94,11 @@ export class ProjectController {
   })
   async getProjectDetails(
     @Param() projectDetails: ProjectDetailsDTO,
-    @Req() req,
   ): Promise<ExistingProjectDTO> {
-    const { projectId } = projectDetails;
-    const { user } = req;
+    const { projectName } = projectDetails;
 
     try {
-      return this.projectService.getProjectDetails(projectId, user.id);
+      return this.projectService.getProjectDetails(projectName);
     } catch (err) {
       throw new BadRequestException(err.message);
     }
@@ -164,8 +111,9 @@ export class ProjectController {
   async addEventToProject(@Body() addEventDetails: AddEventDTO) {
     try {
       const {
+        name,
         topic,
-        projectName,
+        projectId,
         chain_id,
         contract_address,
         abi,
@@ -173,8 +121,9 @@ export class ProjectController {
         sync_historical_data = false,
       } = addEventDetails;
       await this.projectService.addEvent(
+        name,
         topic,
-        projectName,
+        projectId,
         chain_id,
         contract_address,
         webhook_url,
@@ -193,8 +142,8 @@ export class ProjectController {
   })
   async removeEventFromProject(@Body() removeEventDetails: removeEventDTO) {
     try {
-      const { topic, projectName } = removeEventDetails;
-      await this.projectService.removeEvent(topic, projectName);
+      const { topic, projectId } = removeEventDetails;
+      await this.projectService.removeEvent(topic, projectId);
     } catch (err) {
       throw new BadRequestException(err.message);
     }

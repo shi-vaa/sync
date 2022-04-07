@@ -1,4 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { env } from 'types/env';
+import { RPC } from 'types/rpc';
 
 export class CreateProjectDTO {
   @ApiProperty()
@@ -6,4 +8,10 @@ export class CreateProjectDTO {
 
   @ApiProperty()
   description?: string;
+
+  @ApiProperty()
+  env: env;
+
+  @ApiProperty()
+  rpcs: string[];
 }

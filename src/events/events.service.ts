@@ -2,13 +2,15 @@ import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import mongoose from 'mongoose';
-import { ethers } from 'ethers';
+import { BigNumber, ethers, utils } from 'ethers';
+import axios from 'axios';
 
 import { getWeb3 } from 'utils/web3';
 import { EventDocument } from './events.schema';
 import { ProjectService } from 'project/project.service';
 import { Messages } from 'utils/constants';
-import SalesAbi from 'abis/sale.json';
+import SaleAbi from 'abis/sale.json';
+import { IEventsSync } from 'utils/interfaces/eventsSync';
 
 @Injectable()
 export class EventsService {
@@ -19,40 +21,74 @@ export class EventsService {
 
   async createEventsCollectionFromProjectEvents(
     txnHash: string,
-    abi: any,
+    abi: string,
     contract_address: string,
-    projectName: string,
+    projectId: string,
+    webhookUrl: string,
   ) {
     const { polygonWeb3 } = await getWeb3();
     const txnReceipt = await polygonWeb3.eth.getTransactionReceipt(txnHash);
-    const ethNftInterface = new ethers.utils.Interface([...SalesAbi.abi]);
+    const ethNftInterface = new ethers.utils.Interface(JSON.parse(abi));
 
     txnReceipt.logs
       .filter(
         (each) => each.address.toLowerCase() === contract_address.toLowerCase(),
       )
-      .map((each) => ethNftInterface.parseLog(each))
-      .map(async (each) => {
-        const schema = new mongoose.Schema({
-          logs: { type: Object, required: true },
+      .map((each) => {
+        const { args, name, eventFragment } = ethNftInterface.parseLog(each);
+
+        const formattedArgs = {};
+        eventFragment.inputs.forEach((fragment, index) => {
+          const argName = fragment.name;
+          if (fragment.type === 'uint256') {
+            formattedArgs[argName] = args[index].toString();
+          } else {
+            formattedArgs[argName] = args[index];
+          }
         });
 
-        const collectionName = `${projectName}_${contract_address}`;
+        return this.formatLogs(
+          { ...formattedArgs, name },
+          each.transactionHash,
+          each.blockNumber,
+        );
+      })
+      .map(async (each) => {
+        try {
+          const project = await this.projectService.findByProjectId(projectId);
 
-        let model;
+          const schema = new mongoose.Schema({
+            data: { type: Object },
+          });
 
-        await mongoose
-          .connect(process.env.MONGO_URI)
-          .catch((err) => console.error(err));
+          const collectionName = `${project.name}_${contract_address}`;
 
-        if (mongoose.models[`${collectionName}`]) {
-          model = mongoose.model(collectionName);
-        } else {
-          model = mongoose.model(collectionName, schema);
+          let model;
+
+          await mongoose
+            .connect(process.env.MONGO_URI)
+            .catch((err) => console.error(err));
+
+          if (mongoose.models[`${collectionName}`]) {
+            model = mongoose.model<IEventsSync>(collectionName);
+          } else {
+            model = mongoose.model<IEventsSync>(
+              collectionName,
+              schema,
+              collectionName,
+            );
+          }
+
+          await model.updateOne(
+            { 'data.blockNumber': each.blockNumber },
+            { $set: { data: each } },
+            { upsert: true },
+          );
+
+          await this.sendEventToWebHookUrl(each, webhookUrl);
+        } catch (err) {
+          console.error(err.message);
         }
-
-        const collection = new model({ logs: each });
-        await collection.save();
       });
   }
 
@@ -63,57 +99,73 @@ export class EventsService {
   async syncEvents() {
     const events = await this.getAllEvents();
     const provider = new ethers.providers.JsonRpcProvider(
-      'https://speedy-nodes-nyc.moralis.io/61fac31e1c1f5ff3bf1058c6/polygon/mumbai',
+      process.env.POLYGON_RPC,
     );
+    provider.on('error', (err) => console.error(err));
 
     events.forEach(async (event) => {
       const contract = new ethers.Contract(
         event.contract_address,
-        event.abi as any,
+        [event.topic],
         provider,
       );
 
-      provider.on('error', (err) => console.error(err));
-
-      const listedEvents = await contract.queryFilter([event.topic] as any);
-
-      const project = await this.projectService.findByProjectName(
-        event.projectName,
+      const project = await this.projectService.findByProjectId(
+        event.projectId.toString(),
       );
+
+      const ethNftInterface = new ethers.utils.Interface([event.topic]);
 
       if (!project) {
         throw new Error(Messages.ProjectNotFound);
       }
+
+      const fragment = ethNftInterface.getEventTopic(event.name);
+      let listedEvents = await contract.queryFilter(fragment as any);
 
       listedEvents.map(async (listedEvent) => {
         await this.createEventsCollectionFromProjectEvents(
           listedEvent.transactionHash,
           event.abi,
           event.contract_address,
-          event.projectName,
+          event.projectId.toString(),
+          event.webhook_url,
         );
       });
     });
   }
 
-  async findByEventTopic(topic: string) {
-    return this.eventsModel.findOne({ topic });
+  async findByEventName(name: string) {
+    return this.eventsModel.findOne({ name });
   }
 
   async attachAllEventListeners(contract: ethers.Contract) {
     const events = await this.getAllEvents();
 
-    events.forEach((event) => {
-      contract.on(event.topic, (...args) => {
+    events.forEach(async (event) => {
+      contract.on(event.name, (...args) => {
         console.log(args);
         const transaction = args[args.length - 1];
         this.createEventsCollectionFromProjectEvents(
           transaction.transactionHash,
           event.abi,
           event.contract_address,
-          event.projectName,
+          event.projectId.toString(),
+          event.webhook_url,
         );
       });
     });
+  }
+
+  async sendEventToWebHookUrl(data: any, url: string) {
+    return axios.post(url, { data });
+  }
+
+  formatLogs(data: object, txnHash: string, blockNumber: number) {
+    return {
+      ...data,
+      txnHash,
+      blockNumber,
+    } as IEventsSync;
   }
 }
