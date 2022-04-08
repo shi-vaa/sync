@@ -24,22 +24,4 @@ import { EventsService } from './events.service';
 @Controller('events')
 export class EventsController {
   constructor(private readonly eventsService: EventsService) {}
-
-  @Get('sync')
-  @ApiOkResponse({
-    description: constants.OK.description,
-  })
-  @ApiBadRequestResponse({
-    description: constants.BAD_REQUEST.description,
-    type: BadRequestDTO,
-  })
-  async syncEvents() {
-    try {
-      await this.eventsService.syncEvents();
-
-      return Messages.EventsSyncSuccess;
-    } catch (err) {
-      throw new BadRequestException(err.message);
-    }
-  }
 }

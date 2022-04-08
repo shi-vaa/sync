@@ -22,19 +22,9 @@ async function bootstrap() {
 
   await app.listen(process.env.PORT);
 
-  const provider = new ethers.providers.JsonRpcProvider(
-    'https://speedy-nodes-nyc.moralis.io/61fac31e1c1f5ff3bf1058c6/polygon/mumbai',
-  );
-
-  const contract = new ethers.Contract(
-    '0xD68603215c4646386d2e0bE68a38027CE4a7652d',
-    SalesAbi.abi as any,
-    provider,
-  );
-
   const service = app.get<EventsService>(EventsService);
 
   await service.syncEvents();
-  await service.attachAllEventListeners(contract);
+  await service.attachAllEventListeners();
 }
 bootstrap();

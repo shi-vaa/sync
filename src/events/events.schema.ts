@@ -15,7 +15,7 @@ export class Event {
   projectId;
 
   @Prop({ required: true })
-  chain_id: string;
+  chain_id: number;
 
   @Prop({ required: true })
   contract_address: string;
