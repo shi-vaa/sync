@@ -169,7 +169,7 @@ export class ProjectService {
     name: string,
     topic: string,
     projectId: string,
-    chain_id: string,
+    chain_id: number,
     contract_address: string,
     webhook_url: string,
     abi: object,
@@ -223,5 +223,9 @@ export class ProjectService {
       { _id: projectId },
       { $pull: { event_ids: event._id } },
     );
+  }
+
+  async getAllProjects(): Promise<ProjectDocument[]> {
+    return this.projectModel.find();
   }
 }

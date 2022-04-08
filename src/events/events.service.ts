@@ -2,15 +2,15 @@ import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import mongoose from 'mongoose';
-import { BigNumber, ethers, utils } from 'ethers';
+import { ethers } from 'ethers';
 import axios from 'axios';
 
 import { getWeb3 } from 'utils/web3';
 import { EventDocument } from './events.schema';
 import { ProjectService } from 'project/project.service';
 import { Messages } from 'utils/constants';
-import SaleAbi from 'abis/sale.json';
 import { IEventsSync } from 'utils/interfaces/eventsSync';
+import { createContract, configureProvider } from 'utils/helper';
 
 @Injectable()
 export class EventsService {
@@ -97,40 +97,39 @@ export class EventsService {
   }
 
   async syncEvents() {
-    const events = await this.getAllEvents();
-    const provider = new ethers.providers.JsonRpcProvider(
-      process.env.POLYGON_RPC,
-    );
-    provider.on('error', (err) => console.error(err));
+    const projects = await this.projectService.getAllProjects();
 
-    events.forEach(async (event) => {
-      const contract = new ethers.Contract(
-        event.contract_address,
-        [event.topic],
-        provider,
-      );
+    projects.forEach((project) => {
+      const provider = configureProvider(project.rpcs[0]);
 
-      const project = await this.projectService.findByProjectId(
-        event.projectId.toString(),
-      );
+      project.event_ids.forEach(async (eventId) => {
+        const event = await this.findByEventId(eventId.toString());
 
-      const ethNftInterface = new ethers.utils.Interface([event.topic]);
+        if (!event) {
+          throw new Error(Messages.EventNotFound);
+        }
 
-      if (!project) {
-        throw new Error(Messages.ProjectNotFound);
-      }
-
-      const fragment = ethNftInterface.getEventTopic(event.name);
-      let listedEvents = await contract.queryFilter(fragment as any);
-
-      listedEvents.map(async (listedEvent) => {
-        await this.createEventsCollectionFromProjectEvents(
-          listedEvent.transactionHash,
-          event.abi,
+        const contract = createContract(
           event.contract_address,
-          event.projectId.toString(),
-          event.webhook_url,
+          event.topic,
+          provider,
         );
+
+        provider.on('error', (err) => console.error(err));
+
+        const ethNftInterface = new ethers.utils.Interface([event.topic]);
+
+        const fragment = ethNftInterface.getEventTopic(event.name);
+        const listedEvents = await contract.queryFilter(fragment as any);
+        listedEvents.map(async (listedEvent) => {
+          await this.createEventsCollectionFromProjectEvents(
+            listedEvent.transactionHash,
+            event.abi,
+            event.contract_address,
+            event.projectId.toString(),
+            event.webhook_url,
+          );
+        });
       });
     });
   }
@@ -139,20 +138,35 @@ export class EventsService {
     return this.eventsModel.findOne({ name });
   }
 
-  async attachAllEventListeners(contract: ethers.Contract) {
-    const events = await this.getAllEvents();
+  async attachAllEventListeners() {
+    const projects = await this.projectService.getAllProjects();
 
-    events.forEach(async (event) => {
-      contract.on(event.name, (...args) => {
-        console.log(args);
-        const transaction = args[args.length - 1];
-        this.createEventsCollectionFromProjectEvents(
-          transaction.transactionHash,
-          event.abi,
+    projects.forEach((project) => {
+      const provider = configureProvider(project.rpcs[0]);
+
+      project.event_ids.forEach(async (eventId) => {
+        const event = await this.findByEventId(eventId.toString());
+
+        if (!event) {
+          throw new Error(Messages.EventNotFound);
+        }
+
+        const contract = createContract(
           event.contract_address,
-          event.projectId.toString(),
-          event.webhook_url,
+          event.topic,
+          provider,
         );
+
+        contract.on(event.name, (...args) => {
+          const transaction = args[args.length - 1];
+          this.createEventsCollectionFromProjectEvents(
+            transaction.transactionHash,
+            event.abi,
+            event.contract_address,
+            event.projectId.toString(),
+            event.webhook_url,
+          );
+        });
       });
     });
   }
@@ -167,5 +181,9 @@ export class EventsService {
       txnHash,
       blockNumber,
     } as IEventsSync;
+  }
+
+  async findByEventId(eventId: string): Promise<EventDocument> {
+    return this.eventsModel.findById(eventId);
   }
 }

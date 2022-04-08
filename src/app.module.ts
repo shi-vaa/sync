@@ -32,6 +32,8 @@ import { AbisModule } from './abis/abis.module';
     UtilsModule,
 
     AbisModule,
+
+    ConfigModule,
   ],
   controllers: [AppController, AuthController, ProjectController],
   providers: [
