@@ -1,7 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Schema as schema, ObjectId } from 'mongoose';
 import { env } from 'types/env';
-import { RPC } from 'types/rpc';
 
 export type ProjectDocument = Project & Document;
 

@@ -7,10 +7,8 @@ import {
   HttpStatus,
   Param,
   Post,
-  Req,
-  UseGuards,
 } from '@nestjs/common';
-import { AuthGuard } from '@nestjs/passport';
+
 import {
   ApiBadRequestResponse,
   ApiCreatedResponse,
@@ -19,18 +17,12 @@ import {
 } from '@nestjs/swagger';
 
 import constants from 'docs/constants';
-import { Roles } from 'auth/decorators/roles.decorator';
-import { Role } from 'auth/decorators/roles.enum';
-import { RolesGuard } from 'auth/decorators/roles.guard';
-import { AddProjectMemberDTO } from './dtos/add-project-member';
 import { CreateProjectDTO } from './dtos/create-project';
 import { BadRequestDTO } from './dtos/error';
 import { ExistingProjectDTO } from './dtos/existing-project';
 import { ProjectDetailsDTO } from './dtos/project-details';
-import { RemoveProjectMemberDTO } from './dtos/remove-project-member';
 import { ProjectService } from './project.service';
 import { AddEventDTO } from './dtos/add-project-event';
-import { EventsService } from 'events/events.service';
 import { removeEventDTO } from './dtos/remove-project-event';
 
 @Controller('projects')
@@ -49,7 +41,6 @@ export class ProjectController {
   })
   async create(
     @Body() createProjectDto: CreateProjectDTO,
-    @Req() req,
   ): Promise<ExistingProjectDTO> {
     const { name, env, rpcs, description } = createProjectDto;
 
