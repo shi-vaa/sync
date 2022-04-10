@@ -1,10 +1,9 @@
 import { NestFactory } from '@nestjs/core';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
-import { ethers } from 'ethers';
-import { UserService } from 'user/user.service';
+
 import { AppModule } from './app.module';
-import SalesAbi from 'abis/sale.json';
 import { EventsService } from 'events/events.service';
+import logger from 'config/logger';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -21,10 +20,14 @@ async function bootstrap() {
   SwaggerModule.setup('api', app, document);
 
   await app.listen(process.env.PORT);
+  logger.info('Server started');
 
   const service = app.get<EventsService>(EventsService);
 
+  logger.info('Syncing events');
   await service.syncEvents();
+
+  logger.info('Attaching event listeners');
   await service.attachAllEventListeners();
 }
 bootstrap();
