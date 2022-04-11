@@ -162,15 +162,6 @@ export class EventsService {
             );
           }
 
-          console.log(
-            'duplicates',
-            await model.aggregate([
-              { $group: { _id: '$data.blockNumber', count: { $sum: 1 } } },
-              { $match: { _id: { $ne: null }, count: { $gt: 1 } } },
-              { $project: { name: '$_id', _id: 0 } },
-            ]),
-          );
-
           const lastSyncedBlock = await model
             .find({ 'data.name': event.name })
             .sort({ 'data.blockNumber': -1 })
