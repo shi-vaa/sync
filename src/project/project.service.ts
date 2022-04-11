@@ -71,7 +71,6 @@ export class ProjectService {
 
   async removeMember(projectId: string, adminId: string, memberId: string) {
     const project = await this.projectModel.findById(projectId);
-    // const admin = await this.userService.findByUserId(adminId);
     const member = await this.userService.findByUserId(memberId);
 
     if (!member) {
@@ -81,10 +80,6 @@ export class ProjectService {
     if (!project) {
       throw new Error('Project does not exist');
     }
-
-    // if (await !this.isAdminOfProject(adminId, null, project)) {
-    //   throw new Error('User is not an admin');
-    // }
 
     await this.userService.removeFromProject(memberId, projectId);
 

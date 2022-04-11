@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
 import { MongooseModule } from '@nestjs/mongoose';
+
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AuthController } from './auth/auth.controller';
@@ -17,8 +18,6 @@ import { EventsService } from './events/events.service';
 import { EventsModule } from './events/events.module';
 import { UtilsModule } from './utils/utils.module';
 
-import { AbisModule } from './abis/abis.module';
-
 @Module({
   imports: [
     UserModule,
@@ -30,9 +29,6 @@ import { AbisModule } from './abis/abis.module';
     ProjectModule,
     EventsModule,
     UtilsModule,
-
-    AbisModule,
-
     ConfigModule,
   ],
   controllers: [AppController, AuthController, ProjectController],
