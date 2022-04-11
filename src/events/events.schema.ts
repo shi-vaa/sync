@@ -1,7 +1,7 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document } from 'mongoose';
+import { Document, Types } from 'mongoose';
 
-export type ProjectDocument = Event & Document;
+export type EventDocument = Event & Document;
 
 @Schema()
 export class Event {
@@ -9,7 +9,13 @@ export class Event {
   name: string;
 
   @Prop({ required: true })
-  chain_id: string;
+  topic: string;
+
+  @Prop({ required: true, type: Types.ObjectId })
+  projectId;
+
+  @Prop({ required: true })
+  chain_id: number;
 
   @Prop({ required: true })
   contract_address: string;
@@ -19,6 +25,9 @@ export class Event {
 
   @Prop({ required: true })
   webhook_url: string;
+
+  @Prop({ required: true, type: String })
+  abi;
 }
 
 export const EventSchema = SchemaFactory.createForClass(Event);

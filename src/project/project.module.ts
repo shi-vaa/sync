@@ -6,10 +6,12 @@ import { UserModule } from 'user/user.module';
 import { ProjectController } from './project.controller';
 import { ProjectSchema } from './project.schema';
 import { ProjectService } from './project.service';
+import { EventSchema } from 'events/events.schema';
 
 @Module({
   imports: [
     MongooseModule.forFeature([{ name: 'Project', schema: ProjectSchema }]),
+    MongooseModule.forFeature([{ name: 'Event', schema: EventSchema }]),
     forwardRef(() => UserModule),
   ],
   controllers: [ProjectController],

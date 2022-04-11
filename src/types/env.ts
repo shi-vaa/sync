@@ -1,4 +1,4 @@
 export enum env {
-  testNet,
-  mainNet,
+  testNet = 'testnet',
+  mainNet = 'mainnet',
 }

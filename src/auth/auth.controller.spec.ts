@@ -17,7 +17,6 @@ import { ProjectModule } from 'project/project.module';
 
 describe('AuthController', () => {
   let controller: AuthController;
-  let service: AuthService;
   let userService: UserService;
 
   let registeredUser;
