@@ -18,7 +18,7 @@ import { ProjectModule } from 'project/project.module';
 describe('AuthController', () => {
   let controller: AuthController;
   let userService: UserService;
-
+  let service: AuthService;
   let registeredUser;
 
   const mockAuthService = {
