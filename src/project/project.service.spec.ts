@@ -1,11 +1,13 @@
 import { forwardRef } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { Test, TestingModule } from '@nestjs/testing';
-import { ConfigModule } from '@nestjs/config';
 
 import { UserService } from 'user/user.service';
 import { UserModule } from 'user/user.module';
 import { ProjectService } from './project.service';
+import { ProjectSchema } from './project.schema';
+import { EventSchema } from 'events/events.schema';
+import { EventsModule } from 'events/events.module';
 import { ProjectModule } from './project.module';
 
 describe('ProjectService', () => {
@@ -14,10 +16,14 @@ describe('ProjectService', () => {
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       imports: [
-        forwardRef(() => UserModule),
+        // MongooseModule.forFeature([
+        //   { name: 'Project', schema: ProjectSchema },
+        //   { name: 'Event', schema: EventSchema },
+        // ]),
+        MongooseModule.forFeature([{ name: 'Event', schema: EventSchema }]),
         ProjectModule,
-        ConfigModule.forRoot(),
-        MongooseModule.forRoot(process.env.MONGO_URI),
+        forwardRef(() => UserModule),
+        EventsModule,
       ],
       providers: [ProjectService, UserService],
     }).compile();

@@ -1,4 +1,4 @@
 export class removeEventDTO {
-  topic: string;
+  name: string;
   projectId: string;
 }

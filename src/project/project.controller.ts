@@ -133,8 +133,8 @@ export class ProjectController {
   })
   async removeEventFromProject(@Body() removeEventDetails: removeEventDTO) {
     try {
-      const { topic, projectId } = removeEventDetails;
-      await this.projectService.removeEvent(topic, projectId);
+      const { name, projectId } = removeEventDetails;
+      await this.projectService.removeEvent(name, projectId);
     } catch (err) {
       throw new BadRequestException(err.message);
     }
