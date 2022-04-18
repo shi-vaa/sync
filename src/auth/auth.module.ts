@@ -10,10 +10,13 @@ import { RolesGuard } from './decorators/roles.guard';
 import { UserService } from 'user/user.service';
 import { ProjectService } from 'project/project.service';
 import { ProjectModule } from 'project/project.module';
+import { EventsModule } from 'events/events.module';
+import { EventsService } from 'events/events.service';
 
 @Module({
   imports: [
     UserModule,
+    EventsModule,
     ProjectModule,
     PassportModule.register({ defaultStrategy: 'jwt' }),
     JwtModule.register({ secret: process.env.TOKEN_SECRET }),
@@ -26,6 +29,7 @@ import { ProjectModule } from 'project/project.module';
     JwtGuard,
     JwtStrategy,
     RolesGuard,
+    EventsService,
   ],
   exports: [AuthModule],
 })
