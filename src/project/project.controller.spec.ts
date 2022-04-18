@@ -16,7 +16,6 @@ describe('ProjectController', () => {
   let controller: ProjectController;
   let service: ProjectService;
   let userService: UserService;
-  let mockProject;
   let mockUser;
 
   const mockRequest = httpMocks.createRequest();
@@ -41,7 +40,6 @@ describe('ProjectController', () => {
       '83rhekajfnkjadsbfaiudhfi',
     );
 
-    // mockProject = await service.create(mockRequest.user._id, 'test-project-2');
     await userService.create('0xB0DccFD131fA98E42d161bEa10B3FCba40ANjdI', [
       Role.Member,
     ]);
@@ -55,8 +53,6 @@ describe('ProjectController', () => {
     await userService.deleteUserByWalletAddress(
       '0xB0DccFD131fA98E42d161bEa10B3FCba40ANjdI',
     );
-    // await service.deleteProjectById(mockProject._id);
-    // await service.deleteProjectByName('test-project-1');
   });
 
   it('should be defined', () => {

@@ -1,6 +1,7 @@
 import { pino } from 'pino';
 import pretty from 'pino-pretty';
 
+console.log(process.env.MONGO_URI);
 const stream = pretty({ colorize: true });
 let logger = pino(
   {
