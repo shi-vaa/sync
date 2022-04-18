@@ -7,6 +7,7 @@ import { UserService } from 'user/user.service';
 import { Messages } from 'utils/constants';
 import { EventDocument } from 'events/events.schema';
 import { env } from 'types/env';
+import { EventsService } from 'events/events.service';
 
 @Injectable()
 export class ProjectService {
@@ -17,6 +18,8 @@ export class ProjectService {
     private readonly eventModel: Model<EventDocument>,
     @Inject(forwardRef(() => UserService))
     private readonly userService: UserService,
+    @Inject(forwardRef(() => EventsService))
+    private readonly eventService: EventsService,
   ) {}
 
   async create(
@@ -38,9 +41,7 @@ export class ProjectService {
       rpcs,
     });
 
-    const createdProject = await newProject.save();
-
-    return createdProject;
+    return newProject.save();
   }
 
   async findByProjectId(projectId: string): Promise<ProjectDocument> {
@@ -198,11 +199,13 @@ export class ProjectService {
       { _id: projectId },
       { $push: { event_ids: event._id } },
     );
+
+    await this.eventService.syncEvents();
   }
 
-  async removeEvent(topic: string, projectId: string) {
+  async removeEvent(name: string, projectId: string) {
     const project = await this.findByProjectId(projectId);
-    const event = await this.eventModel.findOne({ topic });
+    const event = await this.eventModel.findOne({ name });
 
     if (!event) {
       throw new Error(Messages.EventNotFound);
@@ -212,9 +215,9 @@ export class ProjectService {
       throw new Error(Messages.ProjectNotFound);
     }
 
-    await this.eventModel.findOneAndDelete({ topic });
+    await this.eventModel.findOneAndDelete({ name });
 
-    this.projectModel.updateOne(
+    await this.projectModel.updateOne(
       { _id: projectId },
       { $pull: { event_ids: event._id } },
     );
