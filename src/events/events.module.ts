@@ -1,8 +1,6 @@
 import { forwardRef, Module } from '@nestjs/common';
+import { ConfigModule } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
-import { ConfigurationModule } from 'configuration/configuration.module';
-import logger from 'configuration/logger';
-import { LoggerModule } from 'nestjs-pino';
 
 import { ProjectModule } from 'project/project.module';
 import { ProjectService } from 'project/project.service';
@@ -13,6 +11,7 @@ import { EventsService } from './events.service';
 
 @Module({
   imports: [
+    ConfigModule,
     MongooseModule.forFeature([{ name: 'Event', schema: EventSchema }]),
     forwardRef(() => UserModule),
     forwardRef(() => ProjectModule),

@@ -18,19 +18,17 @@ import { AuthModule } from './auth/auth.module';
 import { EventsService } from './events/events.service';
 import { EventsModule } from './events/events.module';
 import { UtilsModule } from './utils/utils.module';
-import { ConfigurationModule } from './configuration/configuration.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot(),
     MongooseModule.forRoot(process.env.MONGO_URI),
-    ConfigurationModule,
     PassportModule,
     JwtModule.register({ secret: process.env.TOKEN_SECRET }),
+    EventsModule,
     UserModule,
     AuthModule,
     ProjectModule,
-    EventsModule,
     UtilsModule,
   ],
   controllers: [AppController, AuthController, ProjectController],
