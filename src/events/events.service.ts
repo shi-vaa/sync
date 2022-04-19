@@ -11,9 +11,8 @@ import { ProjectService } from 'project/project.service';
 import { Messages } from 'utils/constants';
 import { IEventsSync } from 'utils/interfaces/eventsSync';
 import { createContract, configureProvider } from 'utils/helper';
-import logger from 'configuration/logger';
 import ERC721Abi from 'abis/ERC721.json';
-import { ConfigurationModule } from 'configuration/configuration.module';
+import logger from 'main';
 
 @Injectable()
 export class EventsService {
@@ -72,7 +71,7 @@ export class EventsService {
 
         await mongoose
           .connect(process.env.MONGO_URI)
-          .catch((err) => console.error(err));
+          .catch((err) => logger.error(err));
 
         if (mongoose.models[`${collectionName}`]) {
           model = mongoose.model<IEventsSync>(collectionName);
@@ -89,7 +88,7 @@ export class EventsService {
         });
 
         if (eventLog) {
-          console.log('Already synced');
+          logger.warn('Already synced');
           continue;
         }
 
@@ -97,9 +96,8 @@ export class EventsService {
         await collection.save();
 
         const res = await this.sendEventToWebHookUrl(log, webhookUrl);
-        console.log(res);
       } catch (err) {
-        console.log(err.message);
+        logger.error(err.message);
       }
     }
   }
@@ -125,11 +123,11 @@ export class EventsService {
         const collectionName = `${project.name}_${event.contract_address}`;
         let listedEvents = [];
 
-        provider.on('error', (err) => console.error(err));
+        provider.on('error', (err) => logger.error(err));
 
         await mongoose
           .connect(process.env.MONGO_URI)
-          .catch((err) => console.error(err));
+          .catch((err) => logger.error(err));
 
         const conn = mongoose.connection;
 
@@ -154,7 +152,7 @@ export class EventsService {
 
           await mongoose
             .connect(process.env.MONGO_URI)
-            .catch((err) => console.error(err));
+            .catch((err) => logger.error(err));
 
           if (mongoose.models[`${collectionName}`]) {
             model = mongoose.model<IEventsSync>(collectionName);
@@ -194,7 +192,7 @@ export class EventsService {
               }
             }
           } catch (err) {
-            console.error(err.message);
+            logger.error(err.message);
           }
         } else {
           try {
@@ -205,7 +203,7 @@ export class EventsService {
               'latest',
             );
           } catch (err) {
-            console.error(err.message);
+            logger.error(err.message);
           }
         }
 
@@ -284,6 +282,12 @@ export class EventsService {
   ) {
     const address = '0x0000000000000000000000000000000000000000';
     const listOfEvents = [];
+    const project = await this.projectService.findByProjectId(projectId);
+
+    if (!project) {
+      throw new Error(Messages.ProjectNotFound);
+    }
+
     try {
       const provider = configureProvider(rpc);
       const contract = createContract(
@@ -326,33 +330,30 @@ export class EventsService {
 
         for (const log of txnLogs) {
           const parsedLog = ethNftInterface.parseLog(log);
+
           const metadata = await abi.methods
             .tokenURI(parsedLog.args.tokenId.toString())
             .call();
 
           const response = await axios.get(metadata);
 
-          let formattedLog = {
+          const formattedLog = {
             metadata: JSON.stringify(response.data),
             tokenId: parsedLog.args.tokenId.toString(),
             contract_address,
             blockNumber: log.blockNumber,
           };
 
-          console.log(formattedLog);
-
           const isBurnEvent = parsedLog.args['to'] === address;
           const isMintEvent = parsedLog.args['from'] === address;
 
-          if (isBurnEvent) {
+          if (!isBurnEvent && !isMintEvent) {
+            continue;
+          } else if (isBurnEvent) {
             formattedLog['owner_of'] = parsedLog.args.from;
-          } else if (isMintEvent) {
-            formattedLog['owner_of'] = parsedLog.args.to;
           } else {
-            formattedLog['owner_of'] = parsedLog.args.owner;
+            formattedLog['owner_of'] = parsedLog.args.to;
           }
-
-          const project = await this.projectService.findByProjectId(projectId);
 
           const schema = new mongoose.Schema({
             data: { type: Object },
@@ -364,7 +365,7 @@ export class EventsService {
 
           await mongoose
             .connect(process.env.MONGO_URI)
-            .catch((err) => console.error(err));
+            .catch((err) => logger.error(err));
 
           if (mongoose.models[`${collectionName}`]) {
             model = mongoose.model<IEventsSync>(collectionName);
@@ -381,7 +382,7 @@ export class EventsService {
           });
 
           if (eventLog) {
-            console.log('Already added');
+            logger.warn('Already added');
             continue;
           }
 
@@ -392,7 +393,7 @@ export class EventsService {
         }
       }
     } catch (err) {
-      console.error(err.message);
+      logger.error(err.message);
     }
   }
 }
