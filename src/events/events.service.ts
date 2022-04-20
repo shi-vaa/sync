@@ -2,7 +2,7 @@ import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import mongoose from 'mongoose';
-import { ethers, utils } from 'ethers';
+import { ethers } from 'ethers';
 import axios from 'axios';
 
 import { getWeb3 } from 'utils/web3';
@@ -13,7 +13,6 @@ import { IEventsSync } from 'utils/interfaces/eventsSync';
 import { createContract, configureProvider } from 'utils/helper';
 import ERC721Abi from 'abis/ERC721.json';
 import { PinoLoggerService } from 'logger/pino-logger.service';
-// import logger from 'logger';
 
 @Injectable()
 export class EventsService {
