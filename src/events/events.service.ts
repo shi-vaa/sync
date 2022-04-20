@@ -12,7 +12,8 @@ import { Messages } from 'utils/constants';
 import { IEventsSync } from 'utils/interfaces/eventsSync';
 import { createContract, configureProvider } from 'utils/helper';
 import ERC721Abi from 'abis/ERC721.json';
-import logger from 'main';
+import { PinoLoggerService } from 'logger/pino-logger.service';
+// import logger from 'logger';
 
 @Injectable()
 export class EventsService {
@@ -20,6 +21,7 @@ export class EventsService {
     @InjectModel('Event') private readonly eventsModel: Model<EventDocument>,
     @Inject(forwardRef(() => ProjectService))
     private readonly projectService: ProjectService,
+    private logger: PinoLoggerService,
   ) {}
 
   async createEventsCollectionFromProjectEvents(
@@ -71,7 +73,9 @@ export class EventsService {
 
         await mongoose
           .connect(process.env.MONGO_URI)
-          .catch((err) => logger.error(err));
+          .catch((err) =>
+            this.logger.logService(process.env.MONGO_URI).error(err),
+          );
 
         if (mongoose.models[`${collectionName}`]) {
           model = mongoose.model<IEventsSync>(collectionName);
@@ -88,7 +92,7 @@ export class EventsService {
         });
 
         if (eventLog) {
-          logger.warn('Already synced');
+          this.logger.logService(process.env.MONGO_URI).warn('Already synced');
           continue;
         }
 
@@ -97,7 +101,7 @@ export class EventsService {
 
         const res = await this.sendEventToWebHookUrl(log, webhookUrl);
       } catch (err) {
-        logger.error(err.message);
+        this.logger.logService(process.env.MONGO_URI).error(err.message);
       }
     }
   }
@@ -123,11 +127,15 @@ export class EventsService {
         const collectionName = `${project.name}_${event.contract_address}`;
         let listedEvents = [];
 
-        provider.on('error', (err) => logger.error(err));
+        provider.on('error', (err) =>
+          this.logger.logService(process.env.MONGO_URI).error(err),
+        );
 
         await mongoose
           .connect(process.env.MONGO_URI)
-          .catch((err) => logger.error(err));
+          .catch((err) =>
+            this.logger.logService(process.env.MONGO_URI).error(err),
+          );
 
         const conn = mongoose.connection;
 
@@ -152,7 +160,9 @@ export class EventsService {
 
           await mongoose
             .connect(process.env.MONGO_URI)
-            .catch((err) => logger.error(err));
+            .catch((err) =>
+              this.logger.logService(process.env.MONGO_URI).error(err),
+            );
 
           if (mongoose.models[`${collectionName}`]) {
             model = mongoose.model<IEventsSync>(collectionName);
@@ -192,7 +202,7 @@ export class EventsService {
               }
             }
           } catch (err) {
-            logger.error(err.message);
+            this.logger.logService(process.env.MONGO_URI).error(err.message);
           }
         } else {
           try {
@@ -203,7 +213,7 @@ export class EventsService {
               'latest',
             );
           } catch (err) {
-            logger.error(err.message);
+            this.logger.logService(process.env.MONGO_URI).error(err.message);
           }
         }
 
@@ -340,7 +350,6 @@ export class EventsService {
           const formattedLog = {
             metadata: JSON.stringify(response.data),
             tokenId: parsedLog.args.tokenId.toString(),
-            contract_address,
             blockNumber: log.blockNumber,
           };
 
@@ -365,7 +374,9 @@ export class EventsService {
 
           await mongoose
             .connect(process.env.MONGO_URI)
-            .catch((err) => logger.error(err));
+            .catch((err) =>
+              this.logger.logService(process.env.MONGO_URI).error(err),
+            );
 
           if (mongoose.models[`${collectionName}`]) {
             model = mongoose.model<IEventsSync>(collectionName);
@@ -382,7 +393,7 @@ export class EventsService {
           });
 
           if (eventLog) {
-            logger.warn('Already added');
+            this.logger.logService(process.env.MONGO_URI).warn('Already added');
             continue;
           }
 
@@ -393,7 +404,7 @@ export class EventsService {
         }
       }
     } catch (err) {
-      logger.error(err.message);
+      this.logger.logService(process.env.MONGO_URI).error(err.message);
     }
   }
 }

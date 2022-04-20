@@ -9,6 +9,7 @@ import { ProjectService } from './project.service';
 import { EventSchema } from 'events/events.schema';
 import { EventsModule } from 'events/events.module';
 import { EventsService } from 'events/events.service';
+import { LoggerModule } from 'logger/logger.module';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { EventsService } from 'events/events.service';
     MongooseModule.forFeature([{ name: 'Event', schema: EventSchema }]),
     forwardRef(() => UserModule),
     forwardRef(() => EventsModule),
+    LoggerModule,
   ],
   controllers: [ProjectController],
   providers: [ProjectService, UserService, EventsService],

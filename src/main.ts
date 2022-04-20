@@ -5,6 +5,9 @@ import { AppModule } from './app.module';
 import { EventsService } from 'events/events.service';
 import { pino } from 'pino';
 import pretty from 'pino-pretty';
+// import logger from 'logger';
+import { Logger } from '@nestjs/common';
+import { PinoLoggerService } from 'logger/pino-logger.service';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -21,104 +24,28 @@ async function bootstrap() {
   SwaggerModule.setup('api', app, document);
 
   await app.listen(process.env.PORT);
-  logger.info('Server started');
+  const logger = app.get<PinoLoggerService>(PinoLoggerService);
+
+  logger.logService(process.env.MONGO_URI).info('Server started');
 
   const service = app.get<EventsService>(EventsService);
 
-  logger.info('Attaching event listeners');
+  logger.logService(process.env.MONGO_URI).info('Attaching event listeners');
   await service.attachAllEventListeners();
 
-  logger.info('Syncing events');
+  logger.logService(process.env.MONGO_URI).info('Syncing events');
   await service.syncEvents();
-  logger.info('Synced all events');
+  logger.logService(process.env.MONGO_URI).info('Synced all events');
+
+  logger
+    .logService(process.env.MONGO_URI)
+    .info('Fetching NFTs for 0xB0DccFD131fA98E42d161bEa10B034FCba40aDae');
+  await service.getNfts(
+    '0xb0dccfd131fa98e42d161bea10b034fcba40adae',
+    process.env.POLYGON_RPC,
+    '625eadc30a8e0a0ec5464254',
+    25846638,
+  );
+  logger.logService(process.env.MONGO_URI).info('Fetched NFTs');
 }
 bootstrap();
-
-const stream = pretty({ colorize: true });
-
-let logger = pino(
-  {
-    transport: {
-      targets: [
-        {
-          target: 'pino-pretty',
-          level: 'info',
-          options: {
-            translateTime: 'SYS:dd:mm:yyyy HH:MM:ss',
-            ignore: 'pid,hostname',
-          },
-        },
-        {
-          target: 'pino-mongodb',
-          level: 'info',
-          options: {
-            uri: process.env.MONGO_URI,
-            collection: 'logs',
-          },
-        },
-      ],
-    },
-  },
-  stream,
-);
-logger = logger.child({
-  endpoint: null,
-  createdBy: null,
-  category: null,
-  stack: null,
-});
-const info = (message, endpoint = null, createdBy = null, category = null) => {
-  logger = logger.child({ endpoint, createdBy, category });
-
-  logger.info(message, endpoint, createdBy, category);
-};
-
-const warn = (message, endpoint = null, createdBy = null, category = null) => {
-  logger = logger.child({ endpoint, createdBy, category });
-
-  logger.warn(message, endpoint, createdBy, category);
-};
-
-const error = (
-  message,
-  endpoint = null,
-  createdBy = null,
-  category = null,
-  stack = null,
-) => {
-  logger = logger.child({ endpoint, createdBy, category, stack });
-
-  logger.error(message, endpoint, createdBy, category, stack);
-};
-
-const debug = (
-  message,
-  endpoint = null,
-  createdBy = null,
-  category = null,
-  stack = null,
-) => {
-  logger = logger.child({ endpoint, createdBy, category, stack });
-
-  logger.debug(message, endpoint, createdBy, category, stack);
-};
-
-const fatal = (
-  message,
-  endpoint = null,
-  createdBy = null,
-  category = null,
-  stack = null,
-) => {
-  logger = logger.child({ endpoint, createdBy, category, stack });
-
-  logger.fatal(message, endpoint, createdBy, category, stack);
-};
-
-export default {
-  info,
-  warn,
-  error,
-  debug,
-  fatal,
-};
