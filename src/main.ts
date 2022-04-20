@@ -3,10 +3,6 @@ import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 
 import { AppModule } from './app.module';
 import { EventsService } from 'events/events.service';
-import { pino } from 'pino';
-import pretty from 'pino-pretty';
-// import logger from 'logger';
-import { Logger } from '@nestjs/common';
 import { PinoLoggerService } from 'logger/pino-logger.service';
 
 async function bootstrap() {
