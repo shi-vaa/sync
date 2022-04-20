@@ -2,7 +2,6 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
 import { MongooseModule } from '@nestjs/mongoose';
-import { LoggerModule } from 'nestjs-pino';
 
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -18,6 +17,8 @@ import { AuthModule } from './auth/auth.module';
 import { EventsService } from './events/events.service';
 import { EventsModule } from './events/events.module';
 import { UtilsModule } from './utils/utils.module';
+import { LoggerModule } from './logger/logger.module';
+import { PinoLoggerService } from 'logger/pino-logger.service';
 
 @Module({
   imports: [
@@ -25,6 +26,7 @@ import { UtilsModule } from './utils/utils.module';
     MongooseModule.forRoot(process.env.MONGO_URI),
     PassportModule,
     JwtModule.register({ secret: process.env.TOKEN_SECRET }),
+    LoggerModule,
     EventsModule,
     UserModule,
     AuthModule,
@@ -33,6 +35,7 @@ import { UtilsModule } from './utils/utils.module';
   ],
   controllers: [AppController, AuthController, ProjectController],
   providers: [
+    PinoLoggerService,
     AppService,
     AuthService,
     UserService,

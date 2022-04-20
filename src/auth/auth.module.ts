@@ -12,9 +12,11 @@ import { ProjectService } from 'project/project.service';
 import { ProjectModule } from 'project/project.module';
 import { EventsModule } from 'events/events.module';
 import { EventsService } from 'events/events.service';
+import { LoggerModule } from 'logger/logger.module';
 
 @Module({
   imports: [
+    LoggerModule,
     UserModule,
     EventsModule,
     ProjectModule,
