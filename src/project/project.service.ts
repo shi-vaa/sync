@@ -5,21 +5,20 @@ import { InjectModel } from '@nestjs/mongoose';
 import { ProjectDocument } from './project.schema';
 import { UserService } from 'user/user.service';
 import { Messages } from 'utils/constants';
-import { EventDocument } from 'events/events.schema';
 import { env } from 'types/env';
 import { EventsService } from 'events/events.service';
+import { PinoLoggerService } from 'logger/pino-logger.service';
 
 @Injectable()
 export class ProjectService {
   constructor(
     @InjectModel('Project')
     private readonly projectModel: Model<ProjectDocument>,
-    @InjectModel('Event')
-    private readonly eventModel: Model<EventDocument>,
     @Inject(forwardRef(() => UserService))
     private readonly userService: UserService,
     @Inject(forwardRef(() => EventsService))
     private readonly eventService: EventsService,
+    private logger: PinoLoggerService,
   ) {}
 
   async create(
@@ -100,7 +99,7 @@ export class ProjectService {
     }
 
     project.event_ids.forEach(
-      async (id) => await this.eventModel.findOneAndDelete({ _id: id }),
+      async (id) => await this.eventService.deleteEvent(id.toString()),
     );
     await this.deleteProjectByName(projectName);
   }
@@ -172,7 +171,10 @@ export class ProjectService {
     sync_historical_data = false,
   ) {
     const project = await this.findByProjectId(projectId);
-    const existingEvent = await this.eventModel.findOne({ topic });
+    const existingEvent = await this.eventService.getEvent(
+      name,
+      project['_id'],
+    );
 
     if (existingEvent) {
       throw new Error(Messages.EventExists);
@@ -182,30 +184,30 @@ export class ProjectService {
       throw new Error(Messages.ProjectNotFound);
     }
 
-    const newEvent = new this.eventModel({
+    const event = await this.eventService.createEvent(
       name,
       topic,
       projectId,
       chain_id,
       contract_address,
       webhook_url,
-      abi: JSON.stringify(abi),
+      JSON.stringify(abi),
       sync_historical_data,
-    });
-
-    const event = await newEvent.save();
+    );
 
     await this.projectModel.updateOne(
       { _id: projectId },
       { $push: { event_ids: event._id } },
     );
 
-    await this.eventService.syncEvents();
+    await this.eventService.syncEvent(projectId, event);
+
+    await this.eventService.attachEventListener(projectId, event);
   }
 
   async removeEvent(name: string, projectId: string) {
     const project = await this.findByProjectId(projectId);
-    const event = await this.eventModel.findOne({ name });
+    const event = await this.eventService.getEvent(name, projectId);
 
     if (!event) {
       throw new Error(Messages.EventNotFound);
@@ -215,7 +217,7 @@ export class ProjectService {
       throw new Error(Messages.ProjectNotFound);
     }
 
-    await this.eventModel.findOneAndDelete({ name });
+    await this.eventService.deleteEvent(event._id);
 
     await this.projectModel.updateOne(
       { _id: projectId },

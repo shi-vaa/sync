@@ -11,6 +11,10 @@ import { ProjectController } from './project.controller';
 import { ProjectModule } from './project.module';
 import { ProjectService } from './project.service';
 import { env } from 'types/env';
+import { EventsModule } from 'events/events.module';
+import { EventsService } from 'events/events.service';
+import { LoggerModule } from 'logger/logger.module';
+import { PinoLoggerService } from 'logger/pino-logger.service';
 
 describe('ProjectController', () => {
   let controller: ProjectController;
@@ -23,13 +27,20 @@ describe('ProjectController', () => {
   beforeAll(async () => {
     const module: TestingModule = await Test.createTestingModule({
       imports: [
-        forwardRef(() => UserModule),
-        ProjectModule,
         ConfigModule.forRoot(),
         MongooseModule.forRoot(process.env.MONGO_URI),
+        forwardRef(() => EventsModule),
+        forwardRef(() => UserModule),
+        LoggerModule,
+        ProjectModule,
       ],
       controllers: [ProjectController],
-      providers: [ProjectService, UserService],
+      providers: [
+        ProjectService,
+        UserService,
+        EventsService,
+        PinoLoggerService,
+      ],
     }).compile();
 
     controller = module.get<ProjectController>(ProjectController);
@@ -40,20 +51,20 @@ describe('ProjectController', () => {
       '83rhekajfnkjadsbfaiudhfi',
     );
 
-    await userService.create('0xB0DccFD131fA98E42d161bEa10B3FCba40ANjdI', [
-      Role.Member,
-    ]);
+    // await userService.create('0xB0DccFD131fA98E42d161bEa10B3FCba40ANjdI', [
+    //   Role.Member,
+    // ]);
 
     mockUser = await userService.findByWalletAddress(
       '0xB0DccFD131fA98E42d161bEa10B3FCba40ANjdI',
     );
   });
 
-  afterAll(async () => {
-    await userService.deleteUserByWalletAddress(
-      '0xB0DccFD131fA98E42d161bEa10B3FCba40ANjdI',
-    );
-  });
+  // afterAll(async () => {
+  //   await userService.deleteUserByWalletAddress(
+  //     '0xB0DccFD131fA98E42d161bEa10B3FCba40ANjdI',
+  //   );
+  // });
 
   it('should be defined', () => {
     expect(controller).toBeDefined();
