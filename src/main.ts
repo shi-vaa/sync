@@ -26,22 +26,19 @@ async function bootstrap() {
 
   const service = app.get<EventsService>(EventsService);
 
-  logger.logService(process.env.MONGO_URI).info('Attaching event listeners');
-  await service.attachAllEventListeners();
+  try {
+    await service.attachAllEventListeners();
 
-  logger.logService(process.env.MONGO_URI).info('Syncing events');
-  await service.syncEvents();
-  logger.logService(process.env.MONGO_URI).info('Synced all events');
+    await service.syncEvents();
 
-  logger
-    .logService(process.env.MONGO_URI)
-    .info('Fetching NFTs for 0xB0DccFD131fA98E42d161bEa10B034FCba40aDae');
-  await service.getNfts(
-    '0xb0dccfd131fa98e42d161bea10b034fcba40adae',
-    process.env.POLYGON_RPC,
-    '625eadc30a8e0a0ec5464254',
-    25846638,
-  );
-  logger.logService(process.env.MONGO_URI).info('Fetched NFTs');
+    await service.getNfts(
+      '0xB0DccFD131fA98E42d161bEa10B034FCba40aDae',
+      process.env.POLYGON_RPC,
+      '6267fcf949bcfc213abec6ed',
+      25846638,
+    );
+  } catch (err) {
+    // this.logger.logService(process.env.MONGO_URI).error(err.message);
+  }
 }
 bootstrap();

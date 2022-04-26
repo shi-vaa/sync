@@ -19,6 +19,7 @@ import { EventsModule } from './events/events.module';
 import { UtilsModule } from './utils/utils.module';
 import { LoggerModule } from './logger/logger.module';
 import { PinoLoggerService } from 'logger/pino-logger.service';
+import { ContractModule } from './contract/contract.module';
 
 @Module({
   imports: [
@@ -32,6 +33,7 @@ import { PinoLoggerService } from 'logger/pino-logger.service';
     AuthModule,
     ProjectModule,
     UtilsModule,
+    ContractModule,
   ],
   controllers: [AppController, AuthController, ProjectController],
   providers: [
