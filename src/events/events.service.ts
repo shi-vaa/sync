@@ -2,7 +2,7 @@ import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import mongoose from 'mongoose';
-import { ethers, utils } from 'ethers';
+import { ethers } from 'ethers';
 import axios from 'axios';
 
 import { getWeb3 } from 'utils/web3';
@@ -11,9 +11,9 @@ import { ProjectService } from 'project/project.service';
 import { Messages } from 'utils/constants';
 import { IEventsSync } from 'utils/interfaces/eventsSync';
 import { createContract, configureProvider } from 'utils/helper';
-import logger from 'configuration/logger';
 import ERC721Abi from 'abis/ERC721.json';
-import { ConfigurationModule } from 'configuration/configuration.module';
+import { PinoLoggerService } from 'logger/pino-logger.service';
+import { FallbackProvider } from '@ethersproject/providers';
 
 @Injectable()
 export class EventsService {
@@ -21,6 +21,7 @@ export class EventsService {
     @InjectModel('Event') private readonly eventsModel: Model<EventDocument>,
     @Inject(forwardRef(() => ProjectService))
     private readonly projectService: ProjectService,
+    private logger: PinoLoggerService,
   ) {}
 
   async createEventsCollectionFromProjectEvents(
@@ -72,7 +73,9 @@ export class EventsService {
 
         await mongoose
           .connect(process.env.MONGO_URI)
-          .catch((err) => console.error(err));
+          .catch((err) =>
+            this.logger.logService(process.env.MONGO_URI).error(err),
+          );
 
         if (mongoose.models[`${collectionName}`]) {
           model = mongoose.model<IEventsSync>(collectionName);
@@ -89,7 +92,7 @@ export class EventsService {
         });
 
         if (eventLog) {
-          console.log('Already synced');
+          this.logger.logService(process.env.MONGO_URI).warn('Already synced');
           continue;
         }
 
@@ -97,9 +100,8 @@ export class EventsService {
         await collection.save();
 
         const res = await this.sendEventToWebHookUrl(log, webhookUrl);
-        console.log(res);
       } catch (err) {
-        console.log(err.message);
+        this.logger.logService(process.env.MONGO_URI).error(err.message);
       }
     }
   }
@@ -109,121 +111,130 @@ export class EventsService {
   }
 
   async syncEvents() {
-    const projects = await this.projectService.getAllProjects();
+    const events = await this.getAllEvents();
 
-    for (const project of projects) {
+    for (const event of events) {
+      const { projectId } = event;
+      const project = await this.projectService.findByProjectId(projectId);
       const provider = configureProvider(project.rpcs[0]);
+      provider.on('noNetwork', (args) =>
+        console.log('connection error rpc :', args),
+      );
 
-      for (const eventId of project.event_ids) {
-        const event = await this.findByEventId(eventId.toString());
-
-        if (!event) {
-          throw new Error(Messages.EventNotFound);
-        }
-
-        const ethNftInterface = new ethers.utils.Interface([event.topic]);
-        const collectionName = `${project.name}_${event.contract_address}`;
-        let listedEvents = [];
-
-        provider.on('error', (err) => console.error(err));
-
-        await mongoose
-          .connect(process.env.MONGO_URI)
-          .catch((err) => console.error(err));
-
-        const conn = mongoose.connection;
-
-        const contract = createContract(
-          event.contract_address,
-          event.topic,
-          provider,
-        );
-
-        const collectionExists = await conn.db
-          .collections()
-          .then((arg) =>
-            arg.find((coll) => coll.namespace.split('.')[1] === collectionName),
-          );
-
-        if (collectionExists) {
-          const schema = new mongoose.Schema({
-            data: { type: Object },
-          });
-
-          let model;
-
-          await mongoose
-            .connect(process.env.MONGO_URI)
-            .catch((err) => console.error(err));
-
-          if (mongoose.models[`${collectionName}`]) {
-            model = mongoose.model<IEventsSync>(collectionName);
-          } else {
-            model = mongoose.model<IEventsSync>(
-              collectionName,
-              schema,
-              collectionName,
-            );
-          }
-
-          const lastSyncedBlock = await model
-            .find({ 'data.name': event.name })
-            .sort({ 'data.blockNumber': -1 })
-            .limit(1);
-
-          const fragment = ethNftInterface.getEventTopic(event.name);
-
-          try {
-            if (lastSyncedBlock.length === 0) {
-              const fragment = ethNftInterface.getEventTopic(event.name);
-              listedEvents = await contract.queryFilter(fragment as any);
-            } else {
-              const latest = await provider.getBlockNumber();
-              const latestInDb = lastSyncedBlock[0].data.blockNumber;
-
-              for (let i = latestInDb; i < latest; i += 2000) {
-                const fromBlock = i;
-                const toBlock = Math.min(latest, i + 1999);
-                const events = await contract.queryFilter(
-                  fragment as any,
-                  fromBlock,
-                  toBlock,
-                );
-
-                listedEvents.push(...events);
-              }
-            }
-          } catch (err) {
-            console.error(err.message);
-          }
-        } else {
-          try {
-            const fragment = ethNftInterface.getEventTopic(event.name);
-            listedEvents = await contract.queryFilter(
-              fragment as any,
-              0,
-              'latest',
-            );
-          } catch (err) {
-            console.error(err.message);
-          }
-        }
-
-        for (const listedEvent of listedEvents) {
-          await this.createEventsCollectionFromProjectEvents(
-            listedEvent.transactionHash,
-            event.abi,
-            event.contract_address,
-            event.projectId.toString(),
-            event.webhook_url,
-          );
-        }
-      }
+      this.syncEvent(projectId, event);
     }
   }
 
-  async findByEventName(name: string) {
-    return this.eventsModel.findOne({ name });
+  async syncEvent(projectId: string, event: EventDocument) {
+    const project = await this.projectService.findByProjectId(projectId);
+    let listedEvents = [];
+    const collectionName = `${project.name}_${event.contract_address}`;
+
+    try {
+      const provider = configureProvider(project.rpcs[0]);
+
+      if (!project) {
+        throw new Error(Messages.ProjectNotFound);
+      }
+
+      this.logger
+        .logService(process.env.MONGO_URI)
+        .info(
+          `Syncing old events for event: ${event.name}, project: ${project.name}`,
+        );
+
+      const ethNftInterface = new ethers.utils.Interface([event.topic]);
+
+      const contract = createContract(
+        event.contract_address,
+        event.topic,
+        provider,
+      );
+
+      await mongoose
+        .connect(process.env.MONGO_URI)
+        .catch((err) =>
+          this.logger.logService(process.env.MONGO_URI).error(err),
+        );
+
+      const conn = mongoose.connection;
+
+      const collectionExists = await conn.db
+        .collections()
+        .then((arg) =>
+          arg.find((coll) => coll.namespace.split('.')[1] === collectionName),
+        );
+
+      if (collectionExists) {
+        const schema = new mongoose.Schema({
+          data: { type: Object },
+        });
+
+        let model;
+
+        await mongoose
+          .connect(process.env.MONGO_URI)
+          .catch((err) =>
+            this.logger.logService(process.env.MONGO_URI).error(err),
+          );
+
+        if (mongoose.models[`${collectionName}`]) {
+          model = mongoose.model<IEventsSync>(collectionName);
+        } else {
+          model = mongoose.model<IEventsSync>(
+            collectionName,
+            schema,
+            collectionName,
+          );
+        }
+
+        const lastSyncedBlock = await model
+          .find({ 'data.name': event.name })
+          .sort({ 'data.blockNumber': -1 })
+          .limit(1);
+
+        const fragment = ethNftInterface.getEventTopic(event.name);
+
+        try {
+          if (lastSyncedBlock.length === 0) {
+            const fragment = ethNftInterface.getEventTopic(event.name);
+            listedEvents = await contract.queryFilter(fragment as any);
+          } else {
+            const latest = await provider.getBlockNumber();
+            const latestInDb = lastSyncedBlock[0].data.blockNumber;
+
+            for (let i = latestInDb; i < latest; i += 2000) {
+              const fromBlock = i;
+              const toBlock = Math.min(latest, i + 1999);
+              const events = await contract.queryFilter(
+                fragment as any,
+                fromBlock,
+                toBlock,
+              );
+
+              listedEvents.push(...events);
+            }
+          }
+        } catch (err) {
+          this.logger.logService(process.env.MONGO_URI).error(err.message);
+        }
+      } else {
+        const fragment = ethNftInterface.getEventTopic(event.name);
+        listedEvents = await contract.queryFilter(fragment as any);
+      }
+    } catch (err) {
+      this.logger.logService(process.env.MONGO_URI).error(err.message);
+    }
+
+    for (const listedEvent of listedEvents) {
+      await this.createEventsCollectionFromProjectEvents(
+        listedEvent.transactionHash,
+        event.abi,
+        event.contract_address,
+        event.projectId.toString(),
+        event.webhook_url,
+      );
+    }
   }
 
   async attachAllEventListeners() {
@@ -239,24 +250,66 @@ export class EventsService {
           throw new Error(Messages.EventNotFound);
         }
 
-        const contract = createContract(
-          event.contract_address,
-          event.topic,
-          provider,
-        );
+        // const contract = createContract(
+        //   event.contract_address,
+        //   event.topic,
+        //   provider,
+        // );
 
-        contract.on(event.name, (...args) => {
-          const transaction = args[args.length - 1];
-          this.createEventsCollectionFromProjectEvents(
-            transaction.transactionHash,
-            event.abi,
-            event.contract_address,
-            event.projectId.toString(),
-            event.webhook_url,
-          );
-        });
+        try {
+          // contract.on(event.name, (...args) => {
+          //   const transaction = args[args.length - 1];
+          //   this.createEventsCollectionFromProjectEvents(
+          //     transaction.transactionHash,
+          //     event.abi,
+          //     event.contract_address,
+          //     event.projectId.toString(),
+          //     event.webhook_url,
+          //   );
+          // });
+          this.attachEventListener(project['_id'], event);
+        } catch (err) {
+          this.logger.logService(process.env.MONGO_URI).error(err.message);
+        }
       });
     });
+  }
+
+  async attachEventListener(projectId: string, event: EventDocument) {
+    const project = await this.projectService.findByProjectId(projectId);
+
+    if (!project) {
+      throw new Error(Messages.ProjectNotFound);
+    }
+
+    this.logger
+      .logService(process.env.MONGO_URI)
+      .info(
+        `Attaching event listener for event: ${event.name}, project: ${project.name}`,
+      );
+
+    try {
+      const provider = project.rpcs[0];
+
+      const contract = createContract(
+        event.contract_address,
+        event.topic,
+        provider,
+      );
+
+      contract.on(event.name, (...args) => {
+        const transaction = args[args.length - 1];
+        this.createEventsCollectionFromProjectEvents(
+          transaction.transactionHash,
+          event.abi,
+          event.contract_address,
+          event.projectId.toString(),
+          event.webhook_url,
+        );
+      });
+    } catch (err) {
+      this.logger.logService(process.env.MONGO_URI).error(err.message);
+    }
   }
 
   async sendEventToWebHookUrl(data: any, url: string) {
@@ -284,6 +337,16 @@ export class EventsService {
   ) {
     const address = '0x0000000000000000000000000000000000000000';
     const listOfEvents = [];
+    const project = await this.projectService.findByProjectId(projectId);
+
+    if (!project) {
+      throw new Error(Messages.ProjectNotFound);
+    }
+
+    this.logger
+      .logService(process.env.MONGO_URI)
+      .info(`Fetching NFTs for project: ${project.name}`);
+
     try {
       const provider = configureProvider(rpc);
       const contract = createContract(
@@ -326,33 +389,29 @@ export class EventsService {
 
         for (const log of txnLogs) {
           const parsedLog = ethNftInterface.parseLog(log);
+
           const metadata = await abi.methods
             .tokenURI(parsedLog.args.tokenId.toString())
             .call();
 
           const response = await axios.get(metadata);
 
-          let formattedLog = {
+          const formattedLog = {
             metadata: JSON.stringify(response.data),
             tokenId: parsedLog.args.tokenId.toString(),
-            contract_address,
             blockNumber: log.blockNumber,
           };
-
-          console.log(formattedLog);
 
           const isBurnEvent = parsedLog.args['to'] === address;
           const isMintEvent = parsedLog.args['from'] === address;
 
-          if (isBurnEvent) {
+          if (!isBurnEvent && !isMintEvent) {
+            continue;
+          } else if (isBurnEvent) {
             formattedLog['owner_of'] = parsedLog.args.from;
-          } else if (isMintEvent) {
-            formattedLog['owner_of'] = parsedLog.args.to;
           } else {
-            formattedLog['owner_of'] = parsedLog.args.owner;
+            formattedLog['owner_of'] = parsedLog.args.to;
           }
-
-          const project = await this.projectService.findByProjectId(projectId);
 
           const schema = new mongoose.Schema({
             data: { type: Object },
@@ -364,7 +423,9 @@ export class EventsService {
 
           await mongoose
             .connect(process.env.MONGO_URI)
-            .catch((err) => console.error(err));
+            .catch((err) =>
+              this.logger.logService(process.env.MONGO_URI).error(err),
+            );
 
           if (mongoose.models[`${collectionName}`]) {
             model = mongoose.model<IEventsSync>(collectionName);
@@ -381,7 +442,7 @@ export class EventsService {
           });
 
           if (eventLog) {
-            console.log('Already added');
+            this.logger.logService(process.env.MONGO_URI).warn('Already added');
             continue;
           }
 
@@ -392,7 +453,39 @@ export class EventsService {
         }
       }
     } catch (err) {
-      console.error(err.message);
+      this.logger.logService(process.env.MONGO_URI).error(err.message);
     }
+  }
+
+  async getEvent(name: string, projectId: string) {
+    return this.eventsModel.findOne({ name, projectId });
+  }
+
+  async deleteEvent(eventId: string) {
+    await this.eventsModel.findByIdAndDelete(eventId);
+  }
+
+  async createEvent(
+    name: string,
+    topic: string,
+    projectId: string,
+    chain_id: number,
+    contract_address: string,
+    webhook_url: string,
+    abi: any,
+    sync_historical_data = true,
+  ) {
+    const newEvent = new this.eventsModel({
+      name,
+      topic,
+      projectId,
+      chain_id,
+      contract_address,
+      webhook_url,
+      abi,
+      sync_historical_data,
+    });
+
+    return newEvent.save();
   }
 }
