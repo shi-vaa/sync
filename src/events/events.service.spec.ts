@@ -261,10 +261,10 @@ describe('EventsService', () => {
       listOfEvents.sort((a, b) => a.blockNumber - b.blockNumber);
       const firstBlock = listOfEvents[0];
       const lastBlock = listOfEvents[listOfEvents.length - 1];
-      console.log(firstBlock, '\n', lastBlock);
+      console.log(firstBlock.blockNumber, '\n', lastBlock.blockNumber);
 
       expect(firstBlock.blockNumber).toBe(firstBlockNumber);
-      expect(lastBlock.blockNumber).toBe(latestSyncedBlockInDb.blockNumber);
+      expect(lastBlock.blockNumber).toBe(latestSyncedBlockInDb.data.blockNumber);
     } catch (err) {
       console.error(err.message);
     }
