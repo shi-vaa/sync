@@ -4,9 +4,8 @@ import {
   Post,
   InternalServerErrorException,
 } from '@nestjs/common';
-import { ApiBadRequestResponse, ApiOkResponse, ApiTags } from '@nestjs/swagger';
+import { ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import constants from 'docs/constants';
-import { BadRequestDTO } from 'project/dtos/error';
 import { GetNFTsDTO } from './dtos/Get-nfts';
 import { NftService } from './nft.service';
 

@@ -202,7 +202,7 @@ export class ProjectService {
 
     await this.eventService.syncEvent(projectId, event);
 
-    await this.eventService.attachEventListener(projectId, event);
+    await this.eventService.attachAllEventListeners();
   }
 
   async removeEvent(name: string, projectId: string) {

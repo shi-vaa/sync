@@ -5,7 +5,6 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { UserService } from 'user/user.service';
 import { UserModule } from 'user/user.module';
 import { ProjectService } from './project.service';
-import { EventSchema } from 'events/events.schema';
 import { EventsModule } from 'events/events.module';
 import { ProjectModule } from './project.module';
 import { EventsService } from 'events/events.service';

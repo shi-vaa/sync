@@ -1,5 +1,7 @@
 import { Injectable } from '@nestjs/common';
-import { EventsService } from 'events/events.service';
+import axios from 'axios';
+import mongoose from 'mongoose';
+
 import { PinoLoggerService } from 'logger/pino-logger.service';
 import { ProjectService } from 'project/project.service';
 import { Messages } from 'utils/constants';
@@ -7,8 +9,6 @@ import { configureProvider, createContract } from 'utils/helper';
 import ERC721Abi from 'abis/ERC721.json';
 import { ethers } from 'ethers';
 import { getWeb3 } from 'utils/web3';
-import axios from 'axios';
-import mongoose from 'mongoose';
 import { IEventsSync } from 'utils/interfaces/eventsSync';
 
 @Injectable()

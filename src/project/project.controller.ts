@@ -30,6 +30,20 @@ import { removeEventDTO } from './dtos/remove-project-event';
 export class ProjectController {
   constructor(private projectService: ProjectService) {}
 
+  @Get()
+  @ApiOkResponse({ description: constants.OK.description })
+  @ApiBadRequestResponse({
+    description: constants.BAD_REQUEST.description,
+    type: BadRequestDTO,
+  })
+  async getAllProjects() {
+    try {
+      return await this.projectService.getAllProjects();
+    } catch (err) {
+      throw new BadRequestException(err.message);
+    }
+  }
+
   @Post('create')
   @ApiCreatedResponse({
     description: constants.CREATED.description,

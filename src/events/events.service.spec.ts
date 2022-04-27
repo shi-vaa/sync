@@ -25,7 +25,6 @@ describe('EventsService', () => {
   const eventsContractAddress = '0xD68603215c4646386d2e0bE68a38027CE4a7652d';
   const nftsContractAddress = '0xb0dccfd131fa98e42d161bea10b034fcba40adae';
   const eventsCollectionName = `${projectName}_${eventsContractAddress}`;
-  const nftsCollectionName = `${projectName}_${nftsContractAddress}`;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -33,7 +32,6 @@ describe('EventsService', () => {
         ConfigModule.forRoot(),
         MongooseModule.forRoot(process.env.MONGO_URI),
         EventsModule,
-        // MongooseModule.forFeature([{ name: 'Event', schema: EventSchema }]),
         UserModule,
         LoggerModule,
         ProjectModule,
