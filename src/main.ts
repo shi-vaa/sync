@@ -26,12 +26,8 @@ async function bootstrap() {
 
   const service = app.get<EventsService>(EventsService);
 
-  try {
-    await service.attachAllEventListeners();
+  await service.attachAllEventListeners();
 
-    await service.syncEvents();
-  } catch (err) {
-    // this.logger.logService(process.env.MONGO_URI).error(err.message);
-  }
+  await service.syncEvents();
 }
 bootstrap();

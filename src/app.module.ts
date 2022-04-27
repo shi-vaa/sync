@@ -39,7 +39,12 @@ import { NftModule } from './nft/nft.module';
     ContractModule,
     NftModule,
   ],
-  controllers: [AppController, AuthController, ProjectController, NftController],
+  controllers: [
+    AppController,
+    AuthController,
+    ProjectController,
+    NftController,
+  ],
   providers: [
     PinoLoggerService,
     AppService,
