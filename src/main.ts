@@ -3,8 +3,7 @@ import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 
 import { AppModule } from './app.module';
 import { EventsService } from 'events/events.service';
-import logger from 'configuration/logger';
-import { ConfigurationModule } from 'configuration/configuration.module';
+import { PinoLoggerService } from 'logger/pino-logger.service';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -21,22 +20,25 @@ async function bootstrap() {
   SwaggerModule.setup('api', app, document);
 
   await app.listen(process.env.PORT);
-  logger.info('Server started');
+  const logger = app.get<PinoLoggerService>(PinoLoggerService);
+
+  logger.logService(process.env.MONGO_URI).info('Server started');
 
   const service = app.get<EventsService>(EventsService);
 
-  logger.info('Attaching event listeners');
-  await service.attachAllEventListeners();
+  try {
+    await service.attachAllEventListeners();
 
-  logger.info('Syncing events');
-  await service.syncEvents();
+    await service.syncEvents();
 
-  // logger.info('Fetching NFTs for 0xB0DccFD131fA98E42d161bEa10B034FCba40aDae');
-  // await service.getNfts(
-  //   '0xb0dccfd131fa98e42d161bea10b034fcba40adae',
-  //   process.env.POLYGON_RPC,
-  //   '625e69dbd66abdf9f0258d9e',
-  //   25846638,
-  // );
+    await service.getNfts(
+      '0xB0DccFD131fA98E42d161bEa10B034FCba40aDae',
+      process.env.POLYGON_RPC,
+      '6267fcf949bcfc213abec6ed',
+      25846638,
+    );
+  } catch (err) {
+    // this.logger.logService(process.env.MONGO_URI).error(err.message);
+  }
 }
 bootstrap();

@@ -2,7 +2,6 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
 import { MongooseModule } from '@nestjs/mongoose';
-import { LoggerModule } from 'nestjs-pino';
 
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -18,23 +17,27 @@ import { AuthModule } from './auth/auth.module';
 import { EventsService } from './events/events.service';
 import { EventsModule } from './events/events.module';
 import { UtilsModule } from './utils/utils.module';
-import { ConfigurationModule } from './configuration/configuration.module';
+import { LoggerModule } from './logger/logger.module';
+import { PinoLoggerService } from 'logger/pino-logger.service';
+import { ContractModule } from './contract/contract.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot(),
     MongooseModule.forRoot(process.env.MONGO_URI),
-    ConfigurationModule,
     PassportModule,
     JwtModule.register({ secret: process.env.TOKEN_SECRET }),
+    LoggerModule,
+    EventsModule,
     UserModule,
     AuthModule,
     ProjectModule,
-    EventsModule,
     UtilsModule,
+    ContractModule,
   ],
   controllers: [AppController, AuthController, ProjectController],
   providers: [
+    PinoLoggerService,
     AppService,
     AuthService,
     UserService,
