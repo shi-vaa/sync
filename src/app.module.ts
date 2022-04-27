@@ -20,6 +20,9 @@ import { UtilsModule } from './utils/utils.module';
 import { LoggerModule } from './logger/logger.module';
 import { PinoLoggerService } from 'logger/pino-logger.service';
 import { ContractModule } from './contract/contract.module';
+import { NftController } from './nft/nft.controller';
+import { NftService } from './nft/nft.service';
+import { NftModule } from './nft/nft.module';
 
 @Module({
   imports: [
@@ -34,8 +37,9 @@ import { ContractModule } from './contract/contract.module';
     ProjectModule,
     UtilsModule,
     ContractModule,
+    NftModule,
   ],
-  controllers: [AppController, AuthController, ProjectController],
+  controllers: [AppController, AuthController, ProjectController, NftController],
   providers: [
     PinoLoggerService,
     AppService,
@@ -43,6 +47,7 @@ import { ContractModule } from './contract/contract.module';
     UserService,
     ProjectService,
     EventsService,
+    NftService,
   ],
   exports: [AppModule],
 })

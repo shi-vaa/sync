@@ -264,7 +264,9 @@ describe('EventsService', () => {
       console.log(firstBlock.blockNumber, '\n', lastBlock.blockNumber);
 
       expect(firstBlock.blockNumber).toBe(firstBlockNumber);
-      expect(lastBlock.blockNumber).toBe(latestSyncedBlockInDb.data.blockNumber);
+      expect(lastBlock.blockNumber).toBe(
+        latestSyncedBlockInDb.data.blockNumber,
+      );
     } catch (err) {
       console.error(err.message);
     }
