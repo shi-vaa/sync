@@ -26,19 +26,8 @@ async function bootstrap() {
 
   const service = app.get<EventsService>(EventsService);
 
-  try {
-    await service.attachAllEventListeners();
+  await service.attachAllEventListeners();
 
-    await service.syncEvents();
-
-    await service.getNfts(
-      '0xB0DccFD131fA98E42d161bEa10B034FCba40aDae',
-      process.env.POLYGON_RPC,
-      '6267fcf949bcfc213abec6ed',
-      25846638,
-    );
-  } catch (err) {
-    // this.logger.logService(process.env.MONGO_URI).error(err.message);
-  }
+  await service.syncEvents();
 }
 bootstrap();
