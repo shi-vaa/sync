@@ -1,5 +1,4 @@
 import { ethers } from 'ethers';
-import { FallbackProvider } from '@ethersproject/providers';
 
 export function createContract(
   contract_address: string,
@@ -10,11 +9,5 @@ export function createContract(
 }
 
 export function configureProvider(rpc: string) {
-  return new ethers.providers.JsonRpcProvider(
-    rpc,
-    //   , {
-    //   name: 'mumbai',
-    //   chainId: 80001,
-    // }
-  );
+  return new ethers.providers.JsonRpcProvider(rpc);
 }
