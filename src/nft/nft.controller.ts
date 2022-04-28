@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 import { ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import constants from 'docs/constants';
-import { GetNFTsDTO } from './dtos/Get-nfts';
+import { GetNFTsDTO } from './dtos/get-nfts';
 import { NftService } from './nft.service';
 
 @Controller('nfts')
