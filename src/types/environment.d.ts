@@ -6,7 +6,7 @@ declare global {
       TOKEN_SECRET: string;
       ROLES_KEY: string;
       POLYGON_RPC: string;
-      DEFAULT_BEARER_TOKEN:string;
+      DEFAULT_BEARER_TOKEN: string;
     }
   }
 }
