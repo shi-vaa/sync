@@ -7,10 +7,12 @@ import {
   HttpStatus,
   Param,
   Post,
+  UseGuards,
 } from '@nestjs/common';
 
 import {
   ApiBadRequestResponse,
+  ApiBearerAuth,
   ApiCreatedResponse,
   ApiOkResponse,
   ApiTags,
@@ -24,6 +26,11 @@ import { ProjectDetailsDTO } from './dtos/project-details';
 import { ProjectService } from './project.service';
 import { AddEventDTO } from './dtos/add-project-event';
 import { removeEventDTO } from './dtos/remove-project-event';
+import { AuthGuard } from 'auth/auth.guard';
+import { JwtGuard } from 'auth/guards/jwt.guard';
+import { Roles } from 'auth/decorators/roles.decorator';
+import { Role } from 'auth/decorators/roles.enum';
+import { GetProjectsDTO } from './dtos/get-projects';
 
 @Controller('projects')
 @ApiTags('projects')
@@ -31,20 +38,29 @@ export class ProjectController {
   constructor(private projectService: ProjectService) {}
 
   @Get()
-  @ApiOkResponse({ description: constants.OK.description })
+  @ApiBearerAuth('defaultBearerAuth')
+  @UseGuards(AuthGuard, JwtGuard)
+  @Roles(Role.SuperAdmin, Role.Member, Role.Admin)
+  @ApiOkResponse({
+    description: constants.OK.description,
+    type: GetProjectsDTO,
+  })
   @ApiBadRequestResponse({
     description: constants.BAD_REQUEST.description,
     type: BadRequestDTO,
   })
   async getAllProjects() {
     try {
-      return await this.projectService.getAllProjects();
+      return { projects: await this.projectService.getAllProjects() };
     } catch (err) {
       throw new BadRequestException(err.message);
     }
   }
 
   @Post('create')
+  @ApiBearerAuth('defaultBearerAuth')
+  @UseGuards(AuthGuard, JwtGuard)
+  @Roles(Role.SuperAdmin, Role.Member, Role.Admin)
   @ApiCreatedResponse({
     description: constants.CREATED.description,
     type: ExistingProjectDTO,
@@ -66,6 +82,9 @@ export class ProjectController {
   }
 
   @Post('remove')
+  @ApiBearerAuth('defaultBearerAuth')
+  @UseGuards(AuthGuard, JwtGuard)
+  @Roles(Role.SuperAdmin, Role.Member, Role.Admin)
   @HttpCode(HttpStatus.OK)
   @ApiCreatedResponse({
     description: constants.OK.description,
@@ -88,6 +107,9 @@ export class ProjectController {
   }
 
   @Get('info/:projectName')
+  @ApiBearerAuth('defaultBearerAuth')
+  @UseGuards(AuthGuard, JwtGuard)
+  @Roles(Role.SuperAdmin, Role.Member, Role.Admin)
   @HttpCode(HttpStatus.OK)
   @ApiOkResponse({
     description: constants.OK.description,
@@ -110,6 +132,9 @@ export class ProjectController {
   }
 
   @Post('/events/add')
+  @ApiBearerAuth('defaultBearerAuth')
+  @UseGuards(AuthGuard, JwtGuard)
+  @Roles(Role.SuperAdmin, Role.Member, Role.Admin)
   @ApiCreatedResponse({
     description: constants.OK.description,
   })
@@ -141,6 +166,9 @@ export class ProjectController {
   }
 
   @Post('/events/remove')
+  @ApiBearerAuth('defaultBearerAuth')
+  @UseGuards(AuthGuard, JwtGuard)
+  @Roles(Role.SuperAdmin, Role.Member, Role.Admin)
   @HttpCode(HttpStatus.OK)
   @ApiCreatedResponse({
     description: constants.OK.description,
