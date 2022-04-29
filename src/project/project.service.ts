@@ -22,15 +22,21 @@ export class ProjectService {
   ) {}
 
   async create(
+    userId: string,
     name: string,
     env: env,
     rpcs: string[],
     description?: string,
   ): Promise<ProjectDocument> {
-    const existingProject = await this.projectModel.findOne({ name }).exec();
+    let existingProject = await this.projectModel.findOne({ name }).exec();
+    const user = await this.userService.findByUserId(userId);
 
     if (existingProject) {
-      throw new Error('Project already exisits');
+      throw new Error(Messages.ProjectNotFound);
+    }
+
+    if (!user) {
+      throw new Error(Messages.UserNotFound);
     }
 
     const newProject = await new this.projectModel({
@@ -38,9 +44,20 @@ export class ProjectService {
       description,
       env,
       rpcs,
+      admins: [user._id],
+      members: [user._id],
     });
 
-    return newProject.save();
+    existingProject = await newProject.save();
+
+    await this.userService.makeAdmin(userId);
+
+    await this.userService.addProject(
+      user._id.toString(),
+      newProject._id.toString(),
+    );
+
+    return existingProject;
   }
 
   async findByProjectId(projectId: string): Promise<ProjectDocument> {
@@ -54,31 +71,51 @@ export class ProjectService {
   async addMember(projectId: string, adminId: string, memberId: string) {
     const project = await this.projectModel.findById(projectId);
     const member = await this.userService.findByUserId(memberId);
+    const admin = await this.userService.findByUserId(adminId);
+
+    if (!admin) {
+      throw new Error(Messages.UserNotFound);
+    }
+
+    if (!(await this.isAdminOfProject(adminId, projectId))) {
+      throw new Error(Messages.NotAnAdmin);
+    }
 
     if (!member) {
-      throw new Error('User does not exist');
+      throw new Error(Messages.UserNotFound);
     }
 
     if (!project) {
-      throw new Error('Project does not exist');
+      throw new Error(Messages.ProjectNotFound);
     }
 
     await this.projectModel.updateOne(
       { _id: projectId },
-      { $addToSet: { members: memberId } },
+      { $addToSet: { members: member._id } },
     );
+
+    await this.userService.addProject(memberId, projectId);
   }
 
   async removeMember(projectId: string, adminId: string, memberId: string) {
     const project = await this.projectModel.findById(projectId);
     const member = await this.userService.findByUserId(memberId);
+    const admin = await this.userService.findByUserId(adminId);
+
+    if (!admin) {
+      throw new Error(Messages.UserNotFound);
+    }
+
+    if (!(await this.isAdminOfProject(adminId, projectId))) {
+      throw new Error(Messages.NotAnAdmin);
+    }
 
     if (!member) {
-      throw new Error('User does not exist');
+      throw new Error(Messages.UserNotFound);
     }
 
     if (!project) {
-      throw new Error('Project does not exist');
+      throw new Error(Messages.ProjectNotFound);
     }
 
     await this.userService.removeFromProject(memberId, projectId);
@@ -86,16 +123,26 @@ export class ProjectService {
     if (!project.members.includes(new Schema.Types.ObjectId(memberId))) {
       this.projectModel.updateOne(
         { _id: projectId },
-        { $pull: { members: memberId } },
+        { $pull: { members: member._id } },
       );
     }
   }
 
-  async removeProject(projectName: string) {
+  async removeProject(adminId: string, projectName: string) {
     const project = await this.findByProjectName(projectName);
 
     if (!project) {
-      throw new Error('Project does not exist');
+      throw new Error(Messages.ProjectNotFound);
+    }
+
+    const admin = await this.userService.findByUserId(adminId);
+
+    if (!admin) {
+      throw new Error(Messages.UserNotFound);
+    }
+
+    if (!(await this.isAdminOfProject(adminId, project['_id']))) {
+      throw new Error(Messages.NotAnAdmin);
     }
 
     project.event_ids.forEach(
@@ -104,44 +151,39 @@ export class ProjectService {
     await this.deleteProjectByName(projectName);
   }
 
-  async getProjectDetails(projectName: string): Promise<ProjectDocument> {
+  async getProjectDetails(
+    userId: string,
+    projectName: string,
+  ): Promise<ProjectDocument> {
     const project = await this.findByProjectName(projectName);
+    const user = await this.userService.findByUserId(userId);
 
     if (!project) {
-      throw new Error('Project does not exist');
+      throw new Error(Messages.ProjectNotFound);
+    }
+
+    if (!user) {
+      throw new Error(Messages.UserNotFound);
+    }
+
+    if (!(await this.isUserPartOfProject(userId, project['_id']))) {
+      throw new Error(Messages.NotAMember);
     }
 
     return project;
   }
 
-  async isAdminOfProject(
-    adminId: string,
-    projectId?: string,
-    project?: ProjectDocument,
-  ): Promise<boolean> {
-    if (projectId) {
-      const existingProject = await this.findByProjectId(projectId);
-      return existingProject.admins.includes(
-        new Schema.Types.ObjectId(adminId),
-      );
-    }
-
-    return project.admins.includes(new Schema.Types.ObjectId(adminId));
+  async isAdminOfProject(adminId: string, projectId: string): Promise<boolean> {
+    const existingProject = await this.findByProjectId(projectId);
+    return existingProject.admins.toString().includes(adminId);
   }
 
   async isUserPartOfProject(
     userId: string,
-    projectId?: string,
-    project?: ProjectDocument,
+    projectId: string,
   ): Promise<boolean> {
-    if (projectId) {
-      const existingProject = await this.findByProjectId(projectId);
-      return existingProject.members.includes(
-        new Schema.Types.ObjectId(userId),
-      );
-    }
-
-    return project.members.includes(new Schema.Types.ObjectId(userId));
+    const existingProject = await this.findByProjectId(projectId);
+    return existingProject.members.toString().includes(userId);
   }
 
   async deleteProjectById(projectId: string) {
@@ -161,9 +203,10 @@ export class ProjectService {
   }
 
   async addEvent(
+    userId: string,
+    projectId: string,
     name: string,
     topic: string,
-    projectId: string,
     chain_id: number,
     contract_address: string,
     webhook_url: string,
@@ -171,10 +214,8 @@ export class ProjectService {
     sync_historical_data = false,
   ) {
     const project = await this.findByProjectId(projectId);
-    const existingEvent = await this.eventService.getEvent(
-      name,
-      project['_id'],
-    );
+    const existingEvent = await this.eventService.getEvent(name, projectId);
+    const user = this.userService.findByUserId(userId);
 
     if (existingEvent) {
       throw new Error(Messages.EventExists);
@@ -182,6 +223,14 @@ export class ProjectService {
 
     if (!project) {
       throw new Error(Messages.ProjectNotFound);
+    }
+
+    if (!user) {
+      throw new Error(Messages.UserNotFound);
+    }
+
+    if (!(await this.isUserPartOfProject(userId, projectId))) {
+      throw new Error(Messages.NotAMember);
     }
 
     const event = await this.eventService.createEvent(
@@ -197,7 +246,7 @@ export class ProjectService {
 
     await this.projectModel.updateOne(
       { _id: projectId },
-      { $push: { event_ids: event._id } },
+      { $addToSet: { event_ids: event._id } },
     );
 
     await this.eventService.syncEvent(projectId, event);
@@ -205,9 +254,10 @@ export class ProjectService {
     await this.eventService.attachAllEventListeners();
   }
 
-  async removeEvent(name: string, projectId: string) {
+  async removeEvent(userId: string, projectId: string, name: string) {
     const project = await this.findByProjectId(projectId);
     const event = await this.eventService.getEvent(name, projectId);
+    const user = await this.userService.findByUserId(userId);
 
     if (!event) {
       throw new Error(Messages.EventNotFound);
@@ -215,6 +265,14 @@ export class ProjectService {
 
     if (!project) {
       throw new Error(Messages.ProjectNotFound);
+    }
+
+    if (!user) {
+      throw new Error(Messages.UserNotFound);
+    }
+
+    if (!(await this.isUserPartOfProject(userId, projectId))) {
+      throw new Error(Messages.NotAMember);
     }
 
     await this.eventService.deleteEvent(event._id);

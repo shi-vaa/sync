@@ -19,9 +19,10 @@ export class NftService {
   ) {}
 
   async getNfts(
+    userId: string,
+    projectId: string,
     contract_address: string,
     rpc: string,
-    projectId: string,
     fromBlock: number,
   ) {
     const address = '0x0000000000000000000000000000000000000000';
@@ -30,6 +31,10 @@ export class NftService {
 
     if (!project) {
       throw new Error(Messages.ProjectNotFound);
+    }
+
+    if (!(await this.projectService.isUserPartOfProject(userId, projectId))) {
+      throw new Error(Messages.NotAMember);
     }
 
     this.logger

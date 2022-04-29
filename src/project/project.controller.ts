@@ -7,6 +7,7 @@ import {
   HttpStatus,
   Param,
   Post,
+  Req,
   UseGuards,
 } from '@nestjs/common';
 
@@ -31,6 +32,8 @@ import { JwtGuard } from 'auth/guards/jwt.guard';
 import { Roles } from 'auth/decorators/roles.decorator';
 import { Role } from 'auth/decorators/roles.enum';
 import { GetProjectsDTO } from './dtos/get-projects';
+import { AddProjectMemberDTO } from './dtos/add-project-member';
+import { RemoveProjectMemberDTO } from './dtos/remove-project-member';
 
 @Controller('projects')
 @ApiTags('projects')
@@ -60,7 +63,7 @@ export class ProjectController {
   @Post('create')
   @ApiBearerAuth('defaultBearerAuth')
   @UseGuards(AuthGuard, JwtGuard)
-  @Roles(Role.SuperAdmin, Role.Member, Role.Admin)
+  @Roles(Role.SuperAdmin, Role.Admin)
   @ApiCreatedResponse({
     description: constants.CREATED.description,
     type: ExistingProjectDTO,
@@ -71,11 +74,18 @@ export class ProjectController {
   })
   async create(
     @Body() createProjectDto: CreateProjectDTO,
+    @Req() req,
   ): Promise<ExistingProjectDTO> {
     const { name, env, rpcs, description } = createProjectDto;
 
     try {
-      return this.projectService.create(name, env, rpcs, description);
+      return this.projectService.create(
+        req?.user.id,
+        name,
+        env,
+        rpcs,
+        description,
+      );
     } catch (err) {
       throw new BadRequestException(err.message);
     }
@@ -84,7 +94,7 @@ export class ProjectController {
   @Post('remove')
   @ApiBearerAuth('defaultBearerAuth')
   @UseGuards(AuthGuard, JwtGuard)
-  @Roles(Role.SuperAdmin, Role.Member, Role.Admin)
+  @Roles(Role.SuperAdmin, Role.Admin)
   @HttpCode(HttpStatus.OK)
   @ApiCreatedResponse({
     description: constants.OK.description,
@@ -96,11 +106,12 @@ export class ProjectController {
   async removeProject(
     @Body()
     projectDetails: ProjectDetailsDTO,
+    @Req() req,
   ) {
     const { projectName } = projectDetails;
 
     try {
-      return this.projectService.removeProject(projectName);
+      return this.projectService.removeProject(req?.user?.id, projectName);
     } catch (err) {
       throw new BadRequestException(err.message);
     }
@@ -121,11 +132,12 @@ export class ProjectController {
   })
   async getProjectDetails(
     @Param() projectDetails: ProjectDetailsDTO,
+    @Req() req,
   ): Promise<ExistingProjectDTO> {
     const { projectName } = projectDetails;
 
     try {
-      return this.projectService.getProjectDetails(projectName);
+      return this.projectService.getProjectDetails(req?.user.id, projectName);
     } catch (err) {
       throw new BadRequestException(err.message);
     }
@@ -138,7 +150,7 @@ export class ProjectController {
   @ApiCreatedResponse({
     description: constants.OK.description,
   })
-  async addEventToProject(@Body() addEventDetails: AddEventDTO) {
+  async addEventToProject(@Body() addEventDetails: AddEventDTO, @Req() req) {
     try {
       const {
         name,
@@ -151,9 +163,10 @@ export class ProjectController {
         sync_historical_data = false,
       } = addEventDetails;
       await this.projectService.addEvent(
+        req?.user.id,
+        projectId,
         name,
         topic,
-        projectId,
         chain_id,
         contract_address,
         webhook_url,
@@ -173,10 +186,51 @@ export class ProjectController {
   @ApiCreatedResponse({
     description: constants.OK.description,
   })
-  async removeEventFromProject(@Body() removeEventDetails: removeEventDTO) {
+  async removeEventFromProject(
+    @Body() removeEventDetails: removeEventDTO,
+    @Req() req,
+  ) {
     try {
       const { name, projectId } = removeEventDetails;
-      await this.projectService.removeEvent(name, projectId);
+      await this.projectService.removeEvent(req?.user.id, projectId, name);
+    } catch (err) {
+      throw new BadRequestException(err.message);
+    }
+  }
+
+  @Post('/members/add')
+  @ApiBearerAuth('defaultBearerAuth')
+  @UseGuards(AuthGuard, JwtGuard)
+  @Roles(Role.SuperAdmin, Role.Admin)
+  @ApiCreatedResponse({
+    description: constants.OK.description,
+  })
+  async addMember(
+    @Body() addProjectMemberDto: AddProjectMemberDTO,
+    @Req() req,
+  ) {
+    try {
+      const { projectId, memberId } = addProjectMemberDto;
+      await this.projectService.addMember(projectId, req?.user.id, memberId);
+    } catch (err) {
+      throw new BadRequestException(err.message);
+    }
+  }
+
+  @Post('/members/remove')
+  @ApiBearerAuth('defaultBearerAuth')
+  @UseGuards(AuthGuard, JwtGuard)
+  @Roles(Role.SuperAdmin, Role.Admin)
+  @ApiCreatedResponse({
+    description: constants.OK.description,
+  })
+  async removeMember(
+    @Body() removeMemberDto: RemoveProjectMemberDTO,
+    @Req() req,
+  ) {
+    try {
+      const { projectId, memberId } = removeMemberDto;
+      await this.projectService.removeMember(projectId, req?.user.id, memberId);
     } catch (err) {
       throw new BadRequestException(err.message);
     }
