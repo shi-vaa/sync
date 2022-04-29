@@ -124,9 +124,6 @@ export class EventsService {
       const { projectId } = event;
       const project = await this.projectService.findByProjectId(projectId);
       const provider = configureProvider(project.rpcs[0]);
-      provider.on('noNetwork', (args) =>
-        console.log('connection error rpc :', args),
-      );
 
       this.syncEvent(projectId, event);
     }
