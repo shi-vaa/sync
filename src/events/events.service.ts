@@ -235,6 +235,7 @@ export class EventsService {
               toBlock,
             );
 
+
             listedEvents.push(...events);
           }
         } else {
