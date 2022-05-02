@@ -74,7 +74,7 @@ export class UserService {
       if (!member.projects.includes(new Schema.Types.ObjectId(projectId))) {
         this.userModel.updateOne(
           { _id: userId },
-          { $pull: { projects: project["_id"] } },
+          { $pull: { projects: project['_id'] } },
         );
       }
     }
@@ -104,5 +104,22 @@ export class UserService {
       { _id: userId },
       { $addToSet: { projects: project['_id'] } },
     );
+  }
+
+  async getAllUserProjects(walletAddress: string) {
+    const projects = [];
+    const user = await this.findByWalletAddress(walletAddress);
+
+    if (!user) {
+      throw new Error(Messages.UserNotFound);
+    }
+
+    for (const projectId of user.projects) {
+      projects.push(
+        await this.projectService.findByProjectId(projectId.toString()),
+      );
+    }
+
+    return projects;
   }
 }

@@ -6,4 +6,7 @@ export enum Messages {
   EventsSyncSuccess = 'Syncing events',
   NotAnAdmin = 'User is not admin of project',
   NotAMember = 'User is not a project member',
+  AppIdRequired = 'APP ID is required',
+  InvalidAppId = 'APP ID is invalid',
+  IncorrectAppId = 'APP ID is incorrect',
 }
