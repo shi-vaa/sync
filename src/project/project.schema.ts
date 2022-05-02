@@ -26,6 +26,9 @@ class Project {
 
   @Prop({ required: true })
   rpcs: string[];
+
+  @Prop({ required: true, unique: true })
+  APP_ID: string;
 }
 
 export const ProjectSchema = SchemaFactory.createForClass(Project);

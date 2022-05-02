@@ -7,6 +7,7 @@ import { ProjectService } from 'project/project.service';
 import { EventsService } from 'events/events.service';
 import { EventsModule } from 'events/events.module';
 import { LoggerModule } from 'logger/logger.module';
+import { UserController } from './user.controller';
 
 @Module({
   imports: [
@@ -21,5 +22,7 @@ import { LoggerModule } from 'logger/logger.module';
     UserModule,
     MongooseModule.forFeature([{ name: 'User', schema: UserSchema }]),
   ],
+
+  controllers: [UserController],
 })
 export class UserModule {}
