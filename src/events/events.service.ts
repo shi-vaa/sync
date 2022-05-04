@@ -97,7 +97,7 @@ export class EventsService {
         const collection = new model({ data: { ...log } });
         await collection.save();
 
-        const res = await this.sendEventToWebHookUrl(log, webhookUrl);
+        await this.sendEventToWebHookUrl(log, webhookUrl);
       } catch (err) {
         this.logger.logService(process.env.MONGO_URI).error(err.message);
       }
@@ -124,9 +124,6 @@ export class EventsService {
       const { projectId } = event;
       const project = await this.projectService.findByProjectId(projectId);
       const provider = configureProvider(project.rpcs[0]);
-      provider.on('noNetwork', (args) =>
-        console.log('connection error rpc :', args),
-      );
 
       this.syncEvent(projectId, event);
     }
@@ -227,7 +224,23 @@ export class EventsService {
         }
       } else {
         const fragment = ethNftInterface.getEventTopic(event.name);
-        listedEvents = await contract.queryFilter(fragment as any);
+        if (project.name === 'SatoshiCity') {
+          const latest = await provider.getBlockNumber();
+          for (let i = 26000000; i < latest; i += 1000) {
+            const fromBlock = i;
+            const toBlock = Math.min(latest, i + 999);
+            const events = await contract.queryFilter(
+              fragment as any,
+              fromBlock,
+              toBlock,
+            );
+
+
+            listedEvents.push(...events);
+          }
+        } else {
+          listedEvents = await contract.queryFilter(fragment as any);
+        }
       }
     } catch (err) {
       this.logger.logService(process.env.MONGO_URI).error(err.message);
