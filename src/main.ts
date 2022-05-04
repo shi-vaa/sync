@@ -15,9 +15,28 @@ async function bootstrap() {
     .setDescription('Syncbox APIs')
     .setVersion('1.0')
     .addTag('syncbox')
+    .addBearerAuth(undefined, 'defaultBearerAuth')
     .build();
+
+  const options = {
+    swaggerOptions: {
+      authAction: {
+        defaultBearerAuth: {
+          name: 'defaultBearerAuth',
+          schema: {
+            description: 'Default',
+            type: 'http',
+            in: 'header',
+            scheme: 'bearer',
+            bearerFormat: 'JWT',
+          },
+          value: process.env.DEFAULT_BEARER_TOKEN,
+        },
+      },
+    },
+  };
   const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('api', app, document);
+  SwaggerModule.setup('api', app, document, options);
 
   await app.listen(process.env.PORT);
   const logger = app.get<PinoLoggerService>(PinoLoggerService);
