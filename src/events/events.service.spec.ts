@@ -51,6 +51,7 @@ describe('EventsService', () => {
 
     if (!project) {
       project = await projectService.create(
+        '626b9571c7dbe87c93d1df7c',
         projectName,
         env.testNet,
         [
@@ -64,8 +65,8 @@ describe('EventsService', () => {
         'event Listed(address indexed nft, uint256 indexed nftId, address indexed seller, uint256 price)',
         project['_id'].toString(),
         80001,
-        'http://localhost:8000/webhook',
         eventsContractAddress,
+        'http://localhost:8000/webhook',
         [
           {
             anonymous: false,
@@ -99,6 +100,8 @@ describe('EventsService', () => {
             type: 'event',
           },
         ],
+        0,
+        2000,
       );
     }
   });

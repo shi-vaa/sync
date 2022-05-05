@@ -207,9 +207,9 @@ export class EventsService {
             const latest = await provider.getBlockNumber();
             const latestInDb = lastSyncedBlock[0].data.blockNumber;
 
-            for (let i = latestInDb; i < latest; i += 2000) {
+            for (let i = latestInDb; i < latest; i += event.blockRange) {
               const fromBlock = i;
-              const toBlock = Math.min(latest, i + 1999);
+              const toBlock = Math.min(latest, i + (event.blockRange - 1));
               const events = await contract.queryFilter(
                 fragment as any,
                 fromBlock,
@@ -224,11 +224,11 @@ export class EventsService {
         }
       } else {
         const fragment = ethNftInterface.getEventTopic(event.name);
-        if (project.name === 'SatoshiCity') {
+        if (event.blockRange < 2000) {
           const latest = await provider.getBlockNumber();
-          for (let i = 26000000; i < latest; i += 1000) {
+          for (let i = event.fromBlock; i < latest; i += event.blockRange) {
             const fromBlock = i;
-            const toBlock = Math.min(latest, i + 999);
+            const toBlock = Math.min(latest, i + (event.blockRange - 1));
             const events = await contract.queryFilter(
               fragment as any,
               fromBlock,
@@ -325,6 +325,8 @@ export class EventsService {
     chain_id: number,
     contract_address: string,
     webhook_url: string,
+    fromBlock: number,
+    blockRange: number,
     abi: any,
     sync_historical_data = true,
   ) {
@@ -335,10 +337,42 @@ export class EventsService {
       chain_id,
       contract_address,
       webhook_url,
+      fromBlock,
+      blockRange,
       abi,
       sync_historical_data,
     });
 
     return newEvent.save();
+  }
+
+  async updateEvent(
+    eventId: string,
+    event: {
+      topic?: string;
+      webhook_url?: string;
+      fromBlock?: number;
+      blockRange?: number;
+      abi?: any;
+    },
+  ) {
+    const existingEvent = await this.findByEventId(eventId);
+
+    if (!event) {
+      throw new Error(Messages.EventNotFound);
+    }
+
+    await this.eventsModel.updateOne(
+      { _id: eventId },
+      {
+        $set: {
+          topic: event.topic || existingEvent.topic,
+          webhook_url: event.webhook_url || existingEvent.webhook_url,
+          fromBlock: event.fromBlock || existingEvent.fromBlock,
+          blockRange: event.blockRange || existingEvent.blockRange,
+          abi: event.abi || existingEvent.abi,
+        },
+      },
+    );
   }
 }
