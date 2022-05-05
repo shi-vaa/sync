@@ -216,6 +216,8 @@ export class ProjectService {
     contract_address: string,
     webhook_url: string,
     abi: object,
+    fromBlock = 0,
+    blockRange = 1000,
     sync_historical_data = false,
   ) {
     const project = await this.findByProjectId(projectId);
@@ -245,6 +247,8 @@ export class ProjectService {
       chain_id,
       contract_address,
       webhook_url,
+      fromBlock,
+      blockRange,
       JSON.stringify(abi),
       sync_historical_data,
     );
@@ -286,6 +290,41 @@ export class ProjectService {
       { _id: projectId },
       { $pull: { event_ids: event._id } },
     );
+  }
+
+  async updateEvent(
+    userId: string,
+    projectId: string,
+    eventId: string,
+    event: {
+      topic?: string;
+      webhook_url?: string;
+      fromBlock?: number;
+      blockRange?: number;
+      abi?: any;
+    },
+  ) {
+    const project = await this.findByProjectId(projectId);
+    const existingEvent = await this.eventService.findByEventId(eventId);
+    const user = await this.userService.findByUserId(userId);
+
+    if (!existingEvent) {
+      throw new Error(Messages.EventNotFound);
+    }
+
+    if (!project) {
+      throw new Error(Messages.ProjectNotFound);
+    }
+
+    if (!user) {
+      throw new Error(Messages.UserNotFound);
+    }
+
+    if (!(await this.isUserPartOfProject(userId, projectId))) {
+      throw new Error(Messages.NotAMember);
+    }
+
+    await this.eventService.updateEvent(eventId, event);
   }
 
   async validateAppId(appId: string, projectName?: string, projectId?: string) {

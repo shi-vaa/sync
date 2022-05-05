@@ -6,6 +6,7 @@ import {
   HttpCode,
   HttpStatus,
   Param,
+  Patch,
   Post,
   Req,
   UseGuards,
@@ -36,6 +37,7 @@ import { GetProjectsDTO } from './dtos/get-projects';
 import { AddProjectMemberDTO } from './dtos/add-project-member';
 import { RemoveProjectMemberDTO } from './dtos/remove-project-member';
 import { Messages } from 'utils/constants';
+import { UpdateEventDTO } from './dtos/update-project-event';
 
 @Controller('projects')
 @ApiTags('projects')
@@ -170,6 +172,8 @@ export class ProjectController {
         contract_address,
         abi,
         webhook_url,
+        fromBlock,
+        blockRange,
         sync_historical_data = false,
       } = addEventDetails;
 
@@ -196,6 +200,8 @@ export class ProjectController {
         contract_address,
         webhook_url,
         abi,
+        fromBlock,
+        blockRange,
         sync_historical_data,
       );
     } catch (err) {
@@ -234,6 +240,44 @@ export class ProjectController {
       }
 
       await this.projectService.removeEvent(req?.user.id, projectId, name);
+    } catch (err) {
+      throw new BadRequestException(err.message);
+    }
+  }
+
+  @Patch('/events/update')
+  @ApiHeader({ name: 'app_id', example: '' })
+  @ApiBearerAuth('defaultBearerAuth')
+  @UseGuards(AuthGuard, JwtGuard)
+  @Roles(Role.SuperAdmin, Role.Member, Role.Admin)
+  @HttpCode(HttpStatus.OK)
+  @ApiCreatedResponse({
+    description: constants.OK.description,
+  })
+  async updateEvent(@Body() updateEventDto: UpdateEventDTO, @Req() req) {
+    try {
+      const { projectId, eventId, event } = updateEventDto;
+
+      if (!req.headers?.app_id) {
+        throw new BadRequestException(Messages.AppIdRequired);
+      }
+
+      if (
+        !(await this.projectService.validateAppId(
+          req.headers.app_id,
+          null,
+          projectId,
+        ))
+      ) {
+        throw new Error(Messages.IncorrectAppId);
+      }
+
+      await this.projectService.updateEvent(
+        req?.user.id,
+        projectId,
+        eventId,
+        event,
+      );
     } catch (err) {
       throw new BadRequestException(err.message);
     }
