@@ -13,7 +13,6 @@ import { Role } from 'auth/decorators/roles.enum';
 import { JwtGuard } from 'auth/guards/jwt.guard';
 import constants from 'docs/constants';
 import { GetNFTsDTO } from './dtos/get-nfts';
-
 import { NftService } from './nft.service';
 
 @Controller('nfts')
