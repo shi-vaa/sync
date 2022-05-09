@@ -138,6 +138,7 @@ export class NftService {
 
           if (eventLog) {
             this.logger.logService(process.env.MONGO_URI).warn('Already added');
+            nfts.push(formattedLog);
             continue;
           }
 
@@ -145,8 +146,6 @@ export class NftService {
             data: { ...formattedLog },
           });
           await collection.save();
-          nfts.push(formattedLog);
-
         }
       }
     } catch (err) {

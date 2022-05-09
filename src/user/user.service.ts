@@ -43,11 +43,20 @@ export class UserService {
     return newUser.save();
   }
 
-  async makeAdmin(userId: string) {
+  async makeAdmin(superAdminId: string, userId: string) {
     const user = await this.findByUserId(userId);
+    const superAdmin = await this.findByUserId(superAdminId);
 
     if (!user) {
-      throw new Error('User does not exist');
+      throw new Error(Messages.UserNotFound);
+    }
+
+    if (!superAdmin) {
+      throw new Error(Messages.UserNotFound);
+    }
+
+    if (!this.isSuperAdmin(superAdmin)) {
+      throw new Error(Messages.NotASuperAdmin);
     }
 
     if (!user.roles.includes(Role.Admin)) {
@@ -121,5 +130,13 @@ export class UserService {
     }
 
     return projects;
+  }
+
+  isSuperAdmin(superAdmin: UserDocument) {
+    return superAdmin.roles.includes(Role.SuperAdmin);
+  }
+
+  isAdmin(user: UserDocument) {
+    return user.roles.includes(Role.Admin);
   }
 }
