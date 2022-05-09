@@ -31,13 +31,13 @@ export class NftController {
   })
   async getNfts(@Body() getNftsDto: GetNFTsDTO, @Req() req) {
     try {
-      const { contract_address, rpc, projectId, fromBlockNumber } = getNftsDto;
+      const { contract_address, rpc, projectId, fromBlock } = getNftsDto;
       const nfts = await this.nftService.getNfts(
         req?.user.id,
         projectId,
         contract_address,
         rpc,
-        fromBlockNumber,
+        fromBlock,
       );
 
       return nfts;

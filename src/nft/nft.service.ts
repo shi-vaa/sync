@@ -28,6 +28,7 @@ export class NftService {
     const address = '0x0000000000000000000000000000000000000000';
     const listOfEvents = [];
     const project = await this.projectService.findByProjectId(projectId);
+    const nfts = [];
 
     if (!project) {
       throw new Error(Messages.ProjectNotFound);
@@ -144,10 +145,13 @@ export class NftService {
             data: { ...formattedLog },
           });
           await collection.save();
+          nfts.push(formattedLog);
+
         }
       }
     } catch (err) {
       this.logger.logService(process.env.MONGO_URI).error(err.message);
     }
+    return nfts;
   }
 }
