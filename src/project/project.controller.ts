@@ -6,7 +6,9 @@ import {
   HttpCode,
   HttpStatus,
   Param,
+  Patch,
   Post,
+  Req,
   UseGuards,
 } from '@nestjs/common';
 
@@ -14,6 +16,7 @@ import {
   ApiBadRequestResponse,
   ApiBearerAuth,
   ApiCreatedResponse,
+  ApiHeader,
   ApiOkResponse,
   ApiTags,
 } from '@nestjs/swagger';
@@ -31,36 +34,21 @@ import { JwtGuard } from 'auth/guards/jwt.guard';
 import { Roles } from 'auth/decorators/roles.decorator';
 import { Role } from 'auth/decorators/roles.enum';
 import { GetProjectsDTO } from './dtos/get-projects';
+import { AddProjectMemberDTO } from './dtos/add-project-member';
+import { RemoveProjectMemberDTO } from './dtos/remove-project-member';
+import { Messages } from 'utils/constants';
+import { UpdateEventDTO } from './dtos/update-project-event';
 
 @Controller('projects')
 @ApiTags('projects')
 export class ProjectController {
   constructor(private projectService: ProjectService) {}
 
-  @Get()
-  @ApiBearerAuth('defaultBearerAuth')
-  @UseGuards(AuthGuard, JwtGuard)
-  @Roles(Role.SuperAdmin, Role.Member, Role.Admin)
-  @ApiOkResponse({
-    description: constants.OK.description,
-    type: GetProjectsDTO,
-  })
-  @ApiBadRequestResponse({
-    description: constants.BAD_REQUEST.description,
-    type: BadRequestDTO,
-  })
-  async getAllProjects() {
-    try {
-      return { projects: await this.projectService.getAllProjects() };
-    } catch (err) {
-      throw new BadRequestException(err.message);
-    }
-  }
 
   @Post('create')
   @ApiBearerAuth('defaultBearerAuth')
   @UseGuards(AuthGuard, JwtGuard)
-  @Roles(Role.SuperAdmin, Role.Member, Role.Admin)
+  @Roles(Role.SuperAdmin, Role.Admin)
   @ApiCreatedResponse({
     description: constants.CREATED.description,
     type: ExistingProjectDTO,
@@ -71,20 +59,28 @@ export class ProjectController {
   })
   async create(
     @Body() createProjectDto: CreateProjectDTO,
+    @Req() req,
   ): Promise<ExistingProjectDTO> {
     const { name, env, rpcs, description } = createProjectDto;
 
     try {
-      return this.projectService.create(name, env, rpcs, description);
+      return this.projectService.create(
+        req?.user.id,
+        name,
+        env,
+        rpcs,
+        description,
+      );
     } catch (err) {
       throw new BadRequestException(err.message);
     }
   }
 
   @Post('remove')
+  @ApiHeader({ name: 'app_id', example: '' })
   @ApiBearerAuth('defaultBearerAuth')
   @UseGuards(AuthGuard, JwtGuard)
-  @Roles(Role.SuperAdmin, Role.Member, Role.Admin)
+  @Roles(Role.SuperAdmin, Role.Admin)
   @HttpCode(HttpStatus.OK)
   @ApiCreatedResponse({
     description: constants.OK.description,
@@ -96,17 +92,31 @@ export class ProjectController {
   async removeProject(
     @Body()
     projectDetails: ProjectDetailsDTO,
+    @Req() req,
   ) {
     const { projectName } = projectDetails;
+    if (!req.headers?.app_id) {
+      throw new BadRequestException(Messages.AppIdRequired);
+    }
+
+    if (
+      !(await this.projectService.validateAppId(
+        req.headers.app_id,
+        projectName,
+      ))
+    ) {
+      throw new Error(Messages.IncorrectAppId);
+    }
 
     try {
-      return this.projectService.removeProject(projectName);
+      return this.projectService.removeProject(req?.user?.id, projectName);
     } catch (err) {
       throw new BadRequestException(err.message);
     }
   }
 
   @Get('info/:projectName')
+  @ApiHeader({ name: 'app_id', example: '' })
   @ApiBearerAuth('defaultBearerAuth')
   @UseGuards(AuthGuard, JwtGuard)
   @Roles(Role.SuperAdmin, Role.Member, Role.Admin)
@@ -121,24 +131,39 @@ export class ProjectController {
   })
   async getProjectDetails(
     @Param() projectDetails: ProjectDetailsDTO,
+    @Req() req,
   ): Promise<ExistingProjectDTO> {
     const { projectName } = projectDetails;
 
     try {
-      return this.projectService.getProjectDetails(projectName);
+      if (!req.headers?.app_id) {
+        throw new BadRequestException(Messages.AppIdRequired);
+      }
+
+      if (
+        !(await this.projectService.validateAppId(
+          req.headers.app_id,
+          projectName,
+        ))
+      ) {
+        throw new Error(Messages.IncorrectAppId);
+      }
+
+      return this.projectService.getProjectDetails(req?.user.id, projectName);
     } catch (err) {
       throw new BadRequestException(err.message);
     }
   }
 
   @Post('/events/add')
+  @ApiHeader({ name: 'app_id', example: '' })
   @ApiBearerAuth('defaultBearerAuth')
   @UseGuards(AuthGuard, JwtGuard)
   @Roles(Role.SuperAdmin, Role.Member, Role.Admin)
   @ApiCreatedResponse({
     description: constants.OK.description,
   })
-  async addEventToProject(@Body() addEventDetails: AddEventDTO) {
+  async addEventToProject(@Body() addEventDetails: AddEventDTO, @Req() req) {
     try {
       const {
         name,
@@ -148,16 +173,36 @@ export class ProjectController {
         contract_address,
         abi,
         webhook_url,
+        fromBlock,
+        blockRange,
         sync_historical_data = false,
       } = addEventDetails;
+
+      if (!req.headers?.app_id) {
+        throw new BadRequestException(Messages.AppIdRequired);
+      }
+
+      if (
+        !(await this.projectService.validateAppId(
+          req.headers.app_id,
+          null,
+          projectId,
+        ))
+      ) {
+        throw new Error(Messages.IncorrectAppId);
+      }
+
       await this.projectService.addEvent(
+        req?.user.id,
+        projectId,
         name,
         topic,
-        projectId,
         chain_id,
         contract_address,
         webhook_url,
         abi,
+        fromBlock,
+        blockRange,
         sync_historical_data,
       );
     } catch (err) {
@@ -166,6 +211,7 @@ export class ProjectController {
   }
 
   @Post('/events/remove')
+  @ApiHeader({ name: 'app_id', example: '' })
   @ApiBearerAuth('defaultBearerAuth')
   @UseGuards(AuthGuard, JwtGuard)
   @Roles(Role.SuperAdmin, Role.Member, Role.Admin)
@@ -173,10 +219,136 @@ export class ProjectController {
   @ApiCreatedResponse({
     description: constants.OK.description,
   })
-  async removeEventFromProject(@Body() removeEventDetails: removeEventDTO) {
+  async removeEventFromProject(
+    @Body() removeEventDetails: removeEventDTO,
+    @Req() req,
+  ) {
     try {
       const { name, projectId } = removeEventDetails;
-      await this.projectService.removeEvent(name, projectId);
+
+      if (!req.headers?.app_id) {
+        throw new BadRequestException(Messages.AppIdRequired);
+      }
+
+      if (
+        !(await this.projectService.validateAppId(
+          req.headers.app_id,
+          null,
+          projectId,
+        ))
+      ) {
+        throw new Error(Messages.IncorrectAppId);
+      }
+
+      await this.projectService.removeEvent(req?.user.id, projectId, name);
+    } catch (err) {
+      throw new BadRequestException(err.message);
+    }
+  }
+
+  @Patch('/events/update')
+  @ApiHeader({ name: 'app_id', example: '' })
+  @ApiBearerAuth('defaultBearerAuth')
+  @UseGuards(AuthGuard, JwtGuard)
+  @Roles(Role.SuperAdmin, Role.Member, Role.Admin)
+  @HttpCode(HttpStatus.OK)
+  @ApiCreatedResponse({
+    description: constants.OK.description,
+  })
+  async updateEvent(@Body() updateEventDto: UpdateEventDTO, @Req() req) {
+    try {
+      const { projectId, eventId, event } = updateEventDto;
+
+      if (!req.headers?.app_id) {
+        throw new BadRequestException(Messages.AppIdRequired);
+      }
+
+      if (
+        !(await this.projectService.validateAppId(
+          req.headers.app_id,
+          null,
+          projectId,
+        ))
+      ) {
+        throw new Error(Messages.IncorrectAppId);
+      }
+
+      await this.projectService.updateEvent(
+        req?.user.id,
+        projectId,
+        eventId,
+        event,
+      );
+    } catch (err) {
+      throw new BadRequestException(err.message);
+    }
+  }
+
+  @Post('/members/add')
+  @ApiHeader({ name: 'app_id', example: '' })
+  @ApiBearerAuth('defaultBearerAuth')
+  @UseGuards(AuthGuard, JwtGuard)
+  @Roles(Role.SuperAdmin, Role.Admin)
+  @ApiCreatedResponse({
+    description: constants.OK.description,
+  })
+  async addMember(
+    @Body() addProjectMemberDto: AddProjectMemberDTO,
+    @Req() req,
+  ) {
+    try {
+      const { projectId, memberId } = addProjectMemberDto;
+
+      if (!req.headers?.app_id) {
+        throw new BadRequestException(Messages.AppIdRequired);
+      }
+
+      if (
+        !(await this.projectService.validateAppId(
+          req.headers.app_id,
+          null,
+          projectId,
+        ))
+      ) {
+        throw new Error(Messages.IncorrectAppId);
+      }
+
+      await this.projectService.addMember(projectId, req?.user.id, memberId);
+    } catch (err) {
+      throw new BadRequestException(err.message);
+    }
+  }
+
+  @Post('/members/remove')
+  @ApiHeader({ name: 'app_id', example: '' })
+  @ApiBearerAuth('defaultBearerAuth')
+  @UseGuards(AuthGuard, JwtGuard)
+  @Roles(Role.SuperAdmin, Role.Admin)
+  @ApiCreatedResponse({
+    description: constants.OK.description,
+  })
+  async removeMember(
+    @Body() removeMemberDto: RemoveProjectMemberDTO,
+    @Req() req,
+  ) {
+    try {
+      const { projectId, memberId } = removeMemberDto;
+
+      if (!req.headers?.app_id) {
+        throw new BadRequestException(Messages.AppIdRequired);
+      }
+
+      if (
+        !(await this.projectService.validateAppId(
+          req.headers.app_id,
+          null,
+          projectId,
+        ))
+      ) {
+        throw new Error(Messages.IncorrectAppId);
+      }
+
+      await this.projectService.removeMember(projectId, req?.user.id, memberId);
     } catch (err) {
       throw new BadRequestException(err.message);
     }

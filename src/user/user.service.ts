@@ -6,6 +6,8 @@ import { UserDocument } from './user.schema';
 import { UserDetails } from './user-details.interface';
 import { Role } from 'auth/decorators/roles.enum';
 import { ProjectService } from 'project/project.service';
+import { Messages } from 'utils/constants';
+import { use } from 'passport';
 
 @Injectable()
 export class UserService {
@@ -51,7 +53,7 @@ export class UserService {
     if (!user.roles.includes(Role.Admin)) {
       await this.userModel.updateOne(
         { _id: userId },
-        { $push: { roles: Role.Admin } },
+        { $addToSet: { roles: Role.Admin } },
       );
     }
   }
@@ -61,18 +63,18 @@ export class UserService {
     const member = await this.findByUserId(userId);
 
     if (!member) {
-      throw new Error('User does not exist');
+      throw new Error(Messages.UserNotFound);
     }
 
     if (!project) {
-      throw new Error('Project does not exist');
+      throw new Error(Messages.ProjectNotFound);
     }
 
     if (member?.projects) {
       if (!member.projects.includes(new Schema.Types.ObjectId(projectId))) {
         this.userModel.updateOne(
           { _id: userId },
-          { $pull: { projects: projectId } },
+          { $pull: { projects: project['_id'] } },
         );
       }
     }
@@ -84,5 +86,40 @@ export class UserService {
 
   async deleteUserById(userId: string) {
     await this.userModel.findOneAndDelete({ _id: userId });
+  }
+
+  async addProject(userId: string, projectId: string) {
+    const user = await this.findByUserId(userId);
+    const project = await this.projectService.findByProjectId(projectId);
+
+    if (!user) {
+      throw new Error(Messages.UserNotFound);
+    }
+
+    if (!project) {
+      throw new Error(Messages.ProjectNotFound);
+    }
+
+    await this.userModel.updateOne(
+      { _id: userId },
+      { $addToSet: { projects: project['_id'] } },
+    );
+  }
+
+  async getAllUserProjects(walletAddress: string) {
+    const projects = [];
+    const user = await this.findByWalletAddress(walletAddress);
+
+    if (!user) {
+      throw new Error(Messages.UserNotFound);
+    }
+
+    for (const projectId of user.projects) {
+      projects.push(
+        await this.projectService.findByProjectId(projectId.toString()),
+      );
+    }
+
+    return projects;
   }
 }

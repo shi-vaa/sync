@@ -5,6 +5,7 @@ import { UserDetails } from 'user/user-details.interface';
 import { NewUserDTO } from 'user/dtos/new-user.dto';
 import { UserDocument } from 'user/user.schema';
 import { UserService } from 'user/user.service';
+import { Messages } from 'utils/constants';
 
 @Injectable()
 export class AuthService {
@@ -26,7 +27,7 @@ export class AuthService {
     );
 
     if (existingUser) {
-      throw new Error('User already exists.');
+      throw new Error(Messages.UserExists);
     }
 
     return await this.userService.create(walletAddress, roles, name);
@@ -36,7 +37,7 @@ export class AuthService {
     const user = await this.userService.findByWalletAddress(walletAddress);
 
     if (!user) {
-      throw new Error('User does not exist');
+      throw new Error(Messages.UserNotFound);
     }
 
     return this.userService.getUserDetails(user);

@@ -1,4 +1,5 @@
 import { ethers } from 'ethers';
+import { v4 } from 'uuid';
 
 export function createContract(
   contract_address: string,
@@ -10,4 +11,8 @@ export function createContract(
 
 export function configureProvider(rpc: string) {
   return new ethers.providers.JsonRpcProvider(rpc);
+}
+
+export function generateAppId() {
+  return v4();
 }
