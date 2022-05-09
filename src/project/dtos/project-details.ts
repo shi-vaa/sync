@@ -1,4 +1,4 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiHeader, ApiProperty } from '@nestjs/swagger';
 
 export class ProjectDetailsDTO {
   @ApiProperty()

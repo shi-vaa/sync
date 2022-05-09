@@ -19,17 +19,23 @@ export class NftService {
   ) {}
 
   async getNfts(
+    userId: string,
+    projectId: string,
     contract_address: string,
     rpc: string,
-    projectId: string,
     fromBlock: number,
   ) {
     const address = '0x0000000000000000000000000000000000000000';
     const listOfEvents = [];
     const project = await this.projectService.findByProjectId(projectId);
+    const nfts = [];
 
     if (!project) {
       throw new Error(Messages.ProjectNotFound);
+    }
+
+    if (!(await this.projectService.isUserPartOfProject(userId, projectId))) {
+      throw new Error(Messages.NotAMember);
     }
 
     this.logger
@@ -139,10 +145,13 @@ export class NftService {
             data: { ...formattedLog },
           });
           await collection.save();
+          nfts.push(formattedLog);
+
         }
       }
     } catch (err) {
       this.logger.logService(process.env.MONGO_URI).error(err.message);
     }
+    return nfts;
   }
 }

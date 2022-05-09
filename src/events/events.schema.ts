@@ -26,6 +26,12 @@ export class Event {
   @Prop({ required: true })
   webhook_url: string;
 
+  @Prop({ default: 0 })
+  fromBlock: number;
+
+  @Prop({ default: 1000 })
+  blockRange: number;
+
   @Prop({ required: true, type: String })
   abi;
 }
