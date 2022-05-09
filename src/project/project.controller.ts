@@ -44,6 +44,7 @@ import { UpdateEventDTO } from './dtos/update-project-event';
 export class ProjectController {
   constructor(private projectService: ProjectService) {}
 
+
   @Post('create')
   @ApiBearerAuth('defaultBearerAuth')
   @UseGuards(AuthGuard, JwtGuard)
