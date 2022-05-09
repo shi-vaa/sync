@@ -41,6 +41,10 @@ export class ProjectService {
       throw new Error(Messages.UserNotFound);
     }
 
+    if (!this.userService.isAdmin(user)) {
+      throw new Error(Messages.NotAnAdmin);
+    }
+
     const APP_ID = generateAppId();
 
     const newProject = await new this.projectModel({
@@ -54,8 +58,6 @@ export class ProjectService {
     });
 
     existingProject = await newProject.save();
-
-    await this.userService.makeAdmin(userId);
 
     await this.userService.addProject(
       user._id.toString(),
