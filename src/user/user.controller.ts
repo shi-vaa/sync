@@ -48,7 +48,7 @@ export class UserController {
     }
   }
 
-  @Patch('')
+  @Post('make-admin')
   @ApiBearerAuth('defaultBearerAuth')
   @UseGuards(AuthGuard, JwtGuard)
   @Roles(Role.SuperAdmin)
