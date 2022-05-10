@@ -260,9 +260,9 @@ export class ProjectService {
       { $addToSet: { event_ids: event._id } },
     );
 
-    await this.eventService.syncEvent(projectId, event);
+    // await this.eventService.syncEvent(projectId, event);
 
-    await this.eventService.attachAllEventListeners();
+    // await this.eventService.attachAllEventListeners();
   }
 
   async removeEvent(userId: string, projectId: string, name: string) {
