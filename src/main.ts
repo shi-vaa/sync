@@ -4,6 +4,7 @@ import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { AppModule } from './app.module';
 import { EventsService } from 'events/events.service';
 import { PinoLoggerService } from 'logger/pino-logger.service';
+import { ContractService } from 'contract/contract.service';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
