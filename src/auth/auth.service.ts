@@ -6,14 +6,12 @@ import { NewUserDTO } from 'user/dtos/new-user.dto';
 import { UserDocument } from 'user/user.schema';
 import { UserService } from 'user/user.service';
 import { Messages } from 'utils/constants';
-import { ApiKeysService } from 'api-keys/api-keys.service';
 
 @Injectable()
 export class AuthService {
   constructor(
     private userService: UserService,
     private readonly jwtService: JwtService,
-    private readonly apiKeysService: ApiKeysService,
   ) {}
 
   async register(user: Readonly<NewUserDTO>): Promise<UserDocument> {
@@ -33,7 +31,6 @@ export class AuthService {
     }
 
     const newUser = await this.userService.create(walletAddress, roles, name);
-    await this.apiKeysService.createApiKey(newUser._id);
 
     return newUser;
   }
@@ -48,9 +45,7 @@ export class AuthService {
     return this.userService.getUserDetails(user);
   }
 
-  async login(
-    existingUser: ExistingUserDTO,
-  ): Promise<{ token: string; apiKey: string }> {
+  async login(existingUser: ExistingUserDTO): Promise<{ token: string }> {
     const { walletAddress } = existingUser;
 
     try {
@@ -61,9 +56,7 @@ export class AuthService {
         { secret: process.env.TOKEN_SECRET },
       );
 
-      const apiKey = await this.apiKeysService.findByUserId(user.id);
-
-      return { token: jwt, apiKey: apiKey.key };
+      return { token: jwt };
     } catch (err) {
       throw err;
     }

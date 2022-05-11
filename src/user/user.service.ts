@@ -7,7 +7,6 @@ import { UserDetails } from './user-details.interface';
 import { Role } from 'auth/decorators/roles.enum';
 import { ProjectService } from 'project/project.service';
 import { Messages } from 'utils/constants';
-import { ApiKeysService } from 'api-keys/api-keys.service';
 
 @Injectable()
 export class UserService {
@@ -15,7 +14,6 @@ export class UserService {
     @InjectModel('User') private readonly userModel: Model<UserDocument>,
     @Inject(forwardRef(() => ProjectService))
     private readonly projectService: ProjectService,
-    private readonly apiKeysService: ApiKeysService,
   ) {}
 
   getUserDetails(user: UserDocument): UserDetails {
@@ -131,16 +129,6 @@ export class UserService {
     }
 
     return projects;
-  }
-
-  async getUserIdFromApiKey(apiKey: string) {
-    const key = await this.apiKeysService.getApiKey(apiKey);
-
-    if (!key) {
-      throw new Error(Messages.InvalidApiKey);
-    }
-
-    return key.userId;
   }
 
   isSuperAdmin(superAdmin: UserDocument) {

@@ -10,8 +10,6 @@ import { EventSchema } from 'events/events.schema';
 import { EventsModule } from 'events/events.module';
 import { EventsService } from 'events/events.service';
 import { LoggerModule } from 'logger/logger.module';
-import { ApiKeysModule } from 'api-keys/api-keys.module';
-import { ApiKeysService } from 'api-keys/api-keys.service';
 
 @Module({
   imports: [
@@ -19,11 +17,10 @@ import { ApiKeysService } from 'api-keys/api-keys.service';
     MongooseModule.forFeature([{ name: 'Event', schema: EventSchema }]),
     forwardRef(() => UserModule),
     forwardRef(() => EventsModule),
-    ApiKeysModule,
     LoggerModule,
   ],
   controllers: [ProjectController],
-  providers: [ProjectService, UserService, EventsService, ApiKeysService],
+  providers: [ProjectService, UserService, EventsService],
   exports: [
     ProjectModule,
     MongooseModule.forFeature([{ name: 'Project', schema: ProjectSchema }]),
