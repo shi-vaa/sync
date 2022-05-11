@@ -9,7 +9,6 @@ import { Messages } from 'utils/constants';
 import { env } from 'types/env';
 import { EventsService } from 'events/events.service';
 import { PinoLoggerService } from 'logger/pino-logger.service';
-import { generateAppId } from 'utils/helper';
 
 @Injectable()
 export class ProjectService {
@@ -45,8 +44,6 @@ export class ProjectService {
       throw new Error(Messages.NotAnAdmin);
     }
 
-    const APP_ID = generateAppId();
-
     const newProject = await new this.projectModel({
       name,
       description,
@@ -54,7 +51,6 @@ export class ProjectService {
       rpcs,
       admins: [user._id],
       members: [user._id],
-      APP_ID,
     });
 
     existingProject = await newProject.save();
@@ -259,10 +255,6 @@ export class ProjectService {
       { _id: projectId },
       { $addToSet: { event_ids: event._id } },
     );
-
-    await this.eventService.syncEvent(projectId, event);
-
-    await this.eventService.attachAllEventListeners();
   }
 
   async removeEvent(userId: string, projectId: string, name: string) {
@@ -342,10 +334,14 @@ export class ProjectService {
       throw new Error(Messages.ProjectNotFound);
     }
 
-    return appId === project.APP_ID;
+    return true;
   }
 
   async getAllProjects(): Promise<ProjectDocument[]> {
     return this.projectModel.find();
+  }
+
+  async getAppId(projectId: string) {
+    return (await this.projectModel.findById(projectId)).APP_ID;
   }
 }

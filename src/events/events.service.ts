@@ -24,14 +24,14 @@ export class EventsService {
 
   async createEventsCollectionFromProjectEvents(
     txnHash: string,
-    abi: string,
+    topic: string,
     contract_address: string,
     projectId: string,
     webhookUrl: string,
   ) {
     const { polygonWeb3 } = await getWeb3();
     const txnReceipt = await polygonWeb3.eth.getTransactionReceipt(txnHash);
-    const ethNftInterface = new ethers.utils.Interface(JSON.parse(abi));
+    const ethNftInterface = new ethers.utils.Interface([topic]);
 
     const logs = txnReceipt.logs
       .filter(
@@ -250,7 +250,7 @@ export class EventsService {
     for (const listedEvent of listedEvents) {
       await this.createEventsCollectionFromProjectEvents(
         listedEvent.transactionHash,
-        event.abi,
+        event.topic,
         event.contract_address,
         event.projectId.toString(),
         event.webhook_url,
@@ -282,7 +282,7 @@ export class EventsService {
             const transaction = args[args.length - 1];
             this.createEventsCollectionFromProjectEvents(
               transaction.transactionHash,
-              event.abi,
+              event.topic,
               event.contract_address,
               event.projectId.toString(),
               event.webhook_url,
@@ -327,25 +327,38 @@ export class EventsService {
     chain_id: number,
     contract_address: string,
     webhook_url: string,
-    fromBlock: number,
-    blockRange: number,
-    abi: any,
+    fromBlock = 0,
+    blockRange = 2000,
+    abi,
     sync_historical_data = true,
   ) {
-    const newEvent = new this.eventsModel({
-      name,
-      topic,
+    const existingEvent = await this.eventsModel.findOne({
       projectId,
-      chain_id,
-      contract_address,
-      webhook_url,
-      fromBlock,
-      blockRange,
-      abi,
-      sync_historical_data,
+      name,
     });
 
-    return newEvent.save();
+    if (!existingEvent) {
+      let newEvent = new this.eventsModel({
+        name,
+        topic,
+        projectId,
+        chain_id,
+        contract_address,
+        webhook_url,
+        fromBlock,
+        blockRange,
+        abi,
+        sync_historical_data,
+      });
+
+      newEvent = await newEvent.save();
+
+      await this.syncEvent(projectId, newEvent);
+
+      await this.attachAllEventListeners();
+
+      return newEvent;
+    }
   }
 
   async updateEvent(

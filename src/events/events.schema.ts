@@ -1,5 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, Types } from 'mongoose';
+import { IAbi } from 'utils/interfaces/abi';
 
 export type EventDocument = Event & Document;
 
@@ -32,8 +33,8 @@ export class Event {
   @Prop({ default: 1000 })
   blockRange: number;
 
-  @Prop({ required: true, type: String })
-  abi;
+  @Prop({ required: true, type: Object })
+  abi: IAbi;
 }
 
 export const EventSchema = SchemaFactory.createForClass(Event);

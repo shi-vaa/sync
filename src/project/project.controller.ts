@@ -8,6 +8,7 @@ import {
   Param,
   Patch,
   Post,
+  Query,
   Req,
   UseGuards,
 } from '@nestjs/common';
@@ -33,19 +34,18 @@ import { AuthGuard } from 'auth/auth.guard';
 import { JwtGuard } from 'auth/guards/jwt.guard';
 import { Roles } from 'auth/decorators/roles.decorator';
 import { Role } from 'auth/decorators/roles.enum';
-import { GetProjectsDTO } from './dtos/get-projects';
 import { AddProjectMemberDTO } from './dtos/add-project-member';
 import { RemoveProjectMemberDTO } from './dtos/remove-project-member';
 import { Messages } from 'utils/constants';
 import { UpdateEventDTO } from './dtos/update-project-event';
+import { GetAppIdDTO } from './dtos/get-app-id';
 
 @Controller('projects')
 @ApiTags('projects')
 export class ProjectController {
   constructor(private projectService: ProjectService) {}
 
-
-  @Post('create')
+  @Post('add')
   @ApiBearerAuth('defaultBearerAuth')
   @UseGuards(AuthGuard, JwtGuard)
   @Roles(Role.SuperAdmin, Role.Admin)
@@ -77,7 +77,6 @@ export class ProjectController {
   }
 
   @Post('remove')
-  @ApiHeader({ name: 'app_id', example: '' })
   @ApiBearerAuth('defaultBearerAuth')
   @UseGuards(AuthGuard, JwtGuard)
   @Roles(Role.SuperAdmin, Role.Admin)
@@ -95,18 +94,6 @@ export class ProjectController {
     @Req() req,
   ) {
     const { projectName } = projectDetails;
-    if (!req.headers?.app_id) {
-      throw new BadRequestException(Messages.AppIdRequired);
-    }
-
-    if (
-      !(await this.projectService.validateAppId(
-        req.headers.app_id,
-        projectName,
-      ))
-    ) {
-      throw new Error(Messages.IncorrectAppId);
-    }
 
     try {
       return this.projectService.removeProject(req?.user?.id, projectName);
@@ -116,7 +103,6 @@ export class ProjectController {
   }
 
   @Get('info/:projectName')
-  @ApiHeader({ name: 'app_id', example: '' })
   @ApiBearerAuth('defaultBearerAuth')
   @UseGuards(AuthGuard, JwtGuard)
   @Roles(Role.SuperAdmin, Role.Member, Role.Admin)
@@ -136,19 +122,6 @@ export class ProjectController {
     const { projectName } = projectDetails;
 
     try {
-      if (!req.headers?.app_id) {
-        throw new BadRequestException(Messages.AppIdRequired);
-      }
-
-      if (
-        !(await this.projectService.validateAppId(
-          req.headers.app_id,
-          projectName,
-        ))
-      ) {
-        throw new Error(Messages.IncorrectAppId);
-      }
-
       return this.projectService.getProjectDetails(req?.user.id, projectName);
     } catch (err) {
       throw new BadRequestException(err.message);
@@ -156,7 +129,6 @@ export class ProjectController {
   }
 
   @Post('/events/add')
-  @ApiHeader({ name: 'app_id', example: '' })
   @ApiBearerAuth('defaultBearerAuth')
   @UseGuards(AuthGuard, JwtGuard)
   @Roles(Role.SuperAdmin, Role.Member, Role.Admin)
@@ -178,20 +150,6 @@ export class ProjectController {
         sync_historical_data = false,
       } = addEventDetails;
 
-      if (!req.headers?.app_id) {
-        throw new BadRequestException(Messages.AppIdRequired);
-      }
-
-      if (
-        !(await this.projectService.validateAppId(
-          req.headers.app_id,
-          null,
-          projectId,
-        ))
-      ) {
-        throw new Error(Messages.IncorrectAppId);
-      }
-
       await this.projectService.addEvent(
         req?.user.id,
         projectId,
@@ -211,7 +169,6 @@ export class ProjectController {
   }
 
   @Post('/events/remove')
-  @ApiHeader({ name: 'app_id', example: '' })
   @ApiBearerAuth('defaultBearerAuth')
   @UseGuards(AuthGuard, JwtGuard)
   @Roles(Role.SuperAdmin, Role.Member, Role.Admin)
@@ -226,20 +183,6 @@ export class ProjectController {
     try {
       const { name, projectId } = removeEventDetails;
 
-      if (!req.headers?.app_id) {
-        throw new BadRequestException(Messages.AppIdRequired);
-      }
-
-      if (
-        !(await this.projectService.validateAppId(
-          req.headers.app_id,
-          null,
-          projectId,
-        ))
-      ) {
-        throw new Error(Messages.IncorrectAppId);
-      }
-
       await this.projectService.removeEvent(req?.user.id, projectId, name);
     } catch (err) {
       throw new BadRequestException(err.message);
@@ -247,7 +190,6 @@ export class ProjectController {
   }
 
   @Patch('/events/update')
-  @ApiHeader({ name: 'app_id', example: '' })
   @ApiBearerAuth('defaultBearerAuth')
   @UseGuards(AuthGuard, JwtGuard)
   @Roles(Role.SuperAdmin, Role.Member, Role.Admin)
@@ -258,20 +200,6 @@ export class ProjectController {
   async updateEvent(@Body() updateEventDto: UpdateEventDTO, @Req() req) {
     try {
       const { projectId, eventId, event } = updateEventDto;
-
-      if (!req.headers?.app_id) {
-        throw new BadRequestException(Messages.AppIdRequired);
-      }
-
-      if (
-        !(await this.projectService.validateAppId(
-          req.headers.app_id,
-          null,
-          projectId,
-        ))
-      ) {
-        throw new Error(Messages.IncorrectAppId);
-      }
 
       await this.projectService.updateEvent(
         req?.user.id,
@@ -285,7 +213,6 @@ export class ProjectController {
   }
 
   @Post('/members/add')
-  @ApiHeader({ name: 'app_id', example: '' })
   @ApiBearerAuth('defaultBearerAuth')
   @UseGuards(AuthGuard, JwtGuard)
   @Roles(Role.SuperAdmin, Role.Admin)
@@ -299,20 +226,6 @@ export class ProjectController {
     try {
       const { projectId, memberId } = addProjectMemberDto;
 
-      if (!req.headers?.app_id) {
-        throw new BadRequestException(Messages.AppIdRequired);
-      }
-
-      if (
-        !(await this.projectService.validateAppId(
-          req.headers.app_id,
-          null,
-          projectId,
-        ))
-      ) {
-        throw new Error(Messages.IncorrectAppId);
-      }
-
       await this.projectService.addMember(projectId, req?.user.id, memberId);
     } catch (err) {
       throw new BadRequestException(err.message);
@@ -320,7 +233,6 @@ export class ProjectController {
   }
 
   @Post('/members/remove')
-  @ApiHeader({ name: 'app_id', example: '' })
   @ApiBearerAuth('defaultBearerAuth')
   @UseGuards(AuthGuard, JwtGuard)
   @Roles(Role.SuperAdmin, Role.Admin)
@@ -334,21 +246,26 @@ export class ProjectController {
     try {
       const { projectId, memberId } = removeMemberDto;
 
-      if (!req.headers?.app_id) {
-        throw new BadRequestException(Messages.AppIdRequired);
-      }
-
-      if (
-        !(await this.projectService.validateAppId(
-          req.headers.app_id,
-          null,
-          projectId,
-        ))
-      ) {
-        throw new Error(Messages.IncorrectAppId);
-      }
-
       await this.projectService.removeMember(projectId, req?.user.id, memberId);
+    } catch (err) {
+      throw new BadRequestException(err.message);
+    }
+  }
+
+  @Get('/app_id')
+  @ApiOkResponse({
+    description: constants.OK.description,
+    type: GetAppIdDTO,
+  })
+  @ApiBadRequestResponse({
+    description: constants.BAD_REQUEST.description,
+    type: BadRequestDTO,
+  })
+  async getAppID(@Query() getAppIdDto: GetAppIdDTO) {
+    try {
+      const { projectId } = getAppIdDto;
+
+      return this.projectService.getAppId(projectId);
     } catch (err) {
       throw new BadRequestException(err.message);
     }
