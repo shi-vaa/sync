@@ -18,7 +18,6 @@ import { ProjectService } from 'project/project.service';
 import { Messages } from 'utils/constants';
 import { GetNFTsDTO } from './dtos/get-nfts';
 import { GetNftsParamsDTO } from './dtos/get-nfts-params';
-
 import { NftService } from './nft.service';
 
 @Controller('nfts')
