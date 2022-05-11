@@ -33,7 +33,7 @@ export class Event {
   @Prop({ default: 1000 })
   blockRange: number;
 
-  @Prop({ required: true, type:Object })
+  @Prop({ required: true, type: Object })
   abi: IAbi;
 }
 
