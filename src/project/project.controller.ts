@@ -44,7 +44,7 @@ import { UpdateEventDTO } from './dtos/update-project-event';
 export class ProjectController {
   constructor(private projectService: ProjectService) {}
 
-  @Post('create')
+  @Post('add')
   @ApiBearerAuth('defaultBearerAuth')
   @UseGuards(AuthGuard, JwtGuard)
   @Roles(Role.SuperAdmin, Role.Admin)
@@ -95,7 +95,7 @@ export class ProjectController {
   ) {
     const { projectName } = projectDetails;
     if (!req.headers?.app_id) {
-      throw new BadRequestException(Messages.AppIdRequired);
+      throw new BadRequestException(Messages.ApiKeyRequired);
     }
 
     if (
@@ -104,7 +104,7 @@ export class ProjectController {
         projectName,
       ))
     ) {
-      throw new Error(Messages.IncorrectAppId);
+      throw new Error(Messages.IncorrectApiKey);
     }
 
     try {
@@ -136,7 +136,7 @@ export class ProjectController {
 
     try {
       if (!req.headers?.app_id) {
-        throw new BadRequestException(Messages.AppIdRequired);
+        throw new BadRequestException(Messages.ApiKeyRequired);
       }
 
       if (
@@ -145,7 +145,7 @@ export class ProjectController {
           projectName,
         ))
       ) {
-        throw new Error(Messages.IncorrectAppId);
+        throw new Error(Messages.IncorrectApiKey);
       }
 
       return this.projectService.getProjectDetails(req?.user.id, projectName);
@@ -178,7 +178,7 @@ export class ProjectController {
       } = addEventDetails;
 
       if (!req.headers?.app_id) {
-        throw new BadRequestException(Messages.AppIdRequired);
+        throw new BadRequestException(Messages.ApiKeyRequired);
       }
 
       if (
@@ -188,7 +188,7 @@ export class ProjectController {
           projectId,
         ))
       ) {
-        throw new Error(Messages.IncorrectAppId);
+        throw new Error(Messages.IncorrectApiKey);
       }
 
       await this.projectService.addEvent(
@@ -226,7 +226,7 @@ export class ProjectController {
       const { name, projectId } = removeEventDetails;
 
       if (!req.headers?.app_id) {
-        throw new BadRequestException(Messages.AppIdRequired);
+        throw new BadRequestException(Messages.ApiKeyRequired);
       }
 
       if (
@@ -236,7 +236,7 @@ export class ProjectController {
           projectId,
         ))
       ) {
-        throw new Error(Messages.IncorrectAppId);
+        throw new Error(Messages.IncorrectApiKey);
       }
 
       await this.projectService.removeEvent(req?.user.id, projectId, name);
@@ -259,7 +259,7 @@ export class ProjectController {
       const { projectId, eventId, event } = updateEventDto;
 
       if (!req.headers?.app_id) {
-        throw new BadRequestException(Messages.AppIdRequired);
+        throw new BadRequestException(Messages.ApiKeyRequired);
       }
 
       if (
@@ -269,7 +269,7 @@ export class ProjectController {
           projectId,
         ))
       ) {
-        throw new Error(Messages.IncorrectAppId);
+        throw new Error(Messages.IncorrectApiKey);
       }
 
       await this.projectService.updateEvent(
@@ -299,7 +299,7 @@ export class ProjectController {
       const { projectId, memberId } = addProjectMemberDto;
 
       if (!req.headers?.app_id) {
-        throw new BadRequestException(Messages.AppIdRequired);
+        throw new BadRequestException(Messages.ApiKeyRequired);
       }
 
       if (
@@ -309,7 +309,7 @@ export class ProjectController {
           projectId,
         ))
       ) {
-        throw new Error(Messages.IncorrectAppId);
+        throw new Error(Messages.IncorrectApiKey);
       }
 
       await this.projectService.addMember(projectId, req?.user.id, memberId);
@@ -334,7 +334,7 @@ export class ProjectController {
       const { projectId, memberId } = removeMemberDto;
 
       if (!req.headers?.app_id) {
-        throw new BadRequestException(Messages.AppIdRequired);
+        throw new BadRequestException(Messages.ApiKeyRequired);
       }
 
       if (
@@ -344,7 +344,7 @@ export class ProjectController {
           projectId,
         ))
       ) {
-        throw new Error(Messages.IncorrectAppId);
+        throw new Error(Messages.IncorrectApiKey);
       }
 
       await this.projectService.removeMember(projectId, req?.user.id, memberId);

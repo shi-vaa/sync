@@ -37,13 +37,13 @@ export class ContractService {
         throw new Error(Messages.ProjectNotFound);
       }
 
-      // const newContract = new this.contractModel({
-      //   projectId,
-      //   contract_address,
-      //   abi,
-      // });
+      const newContract = new this.contractModel({
+        projectId,
+        contract_address,
+        abi,
+      });
 
-      // await newContract.save();
+      await newContract.save();
 
       for (const item of abi) {
         await this.createEventFromAbi(

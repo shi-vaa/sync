@@ -6,7 +6,9 @@ import {
   HttpStatus,
   Post,
 } from '@nestjs/common';
-import { ApiOkResponse, ApiTags } from '@nestjs/swagger';
+import { ApiBadRequestResponse, ApiOkResponse, ApiTags } from '@nestjs/swagger';
+import constants from 'docs/constants';
+import { BadRequestDTO } from 'project/dtos/error';
 import { IAbi } from 'utils/interfaces/abi';
 import { ContractService } from './contract.service';
 import { AddContractDTO } from './dtos/add-contract';
@@ -17,7 +19,14 @@ export class ContractController {
   constructor(private readonly contractService: ContractService) {}
 
   @Post('add')
-  //add api keys and auth
+  @ApiOkResponse({
+    description: constants.OK.description,
+    type: AddContractDTO,
+  })
+  @ApiBadRequestResponse({
+    description: constants.BAD_REQUEST.description,
+    type: BadRequestDTO,
+  })
   async addContract(@Body() addContractDto: AddContractDTO) {
     try {
       const {

@@ -13,6 +13,8 @@ import { ProjectModule } from 'project/project.module';
 import { EventsModule } from 'events/events.module';
 import { EventsService } from 'events/events.service';
 import { LoggerModule } from 'logger/logger.module';
+import { ApiKeysService } from 'api-keys/api-keys.service';
+import { ApiKeysModule } from 'api-keys/api-keys.module';
 
 @Module({
   imports: [
@@ -22,6 +24,7 @@ import { LoggerModule } from 'logger/logger.module';
     ProjectModule,
     PassportModule.register({ defaultStrategy: 'jwt' }),
     JwtModule.register({ secret: process.env.TOKEN_SECRET }),
+    ApiKeysModule,
   ],
   controllers: [AuthController],
   providers: [
@@ -32,6 +35,7 @@ import { LoggerModule } from 'logger/logger.module';
     JwtStrategy,
     RolesGuard,
     EventsService,
+    ApiKeysService,
   ],
   exports: [AuthModule],
 })

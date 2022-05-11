@@ -23,6 +23,8 @@ import { ContractModule } from './contract/contract.module';
 import { NftController } from './nft/nft.controller';
 import { NftService } from './nft/nft.service';
 import { NftModule } from './nft/nft.module';
+import { ApiKeysService } from './api-keys/api-keys.service';
+import { ApiKeysModule } from './api-keys/api-keys.module';
 
 @Module({
   imports: [
@@ -38,6 +40,7 @@ import { NftModule } from './nft/nft.module';
     UtilsModule,
     ContractModule,
     NftModule,
+    ApiKeysModule,
   ],
   controllers: [
     AppController,
@@ -53,6 +56,7 @@ import { NftModule } from './nft/nft.module';
     ProjectService,
     EventsService,
     NftService,
+    ApiKeysService,
   ],
   exports: [AppModule],
 })

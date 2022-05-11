@@ -12,6 +12,8 @@ import { EventsModule } from 'events/events.module';
 import { EventsService } from 'events/events.service';
 import { UserModule } from 'user/user.module';
 import { UserService } from 'user/user.service';
+import { ApiKeysModule } from 'api-keys/api-keys.module';
+import { ApiKeysService } from 'api-keys/api-keys.service';
 
 @Module({
   imports: [
@@ -19,6 +21,7 @@ import { UserService } from 'user/user.service';
     UserModule,
     ProjectModule,
     EventsModule,
+    ApiKeysModule,
     LoggerModule,
   ],
   providers: [
@@ -26,6 +29,7 @@ import { UserService } from 'user/user.service';
     UserService,
     ProjectService,
     EventsService,
+    ApiKeysService,
     PinoLoggerService,
   ],
   controllers: [ContractController],
