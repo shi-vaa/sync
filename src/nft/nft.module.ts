@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+
 import { EventsModule } from 'events/events.module';
 import { EventsService } from 'events/events.service';
 import { LoggerModule } from 'logger/logger.module';

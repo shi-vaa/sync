@@ -5,34 +5,60 @@ import {
   InternalServerErrorException,
   UseGuards,
   Req,
+  UnauthorizedException,
+  Param,
+  BadRequestException,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiOkResponse, ApiTags } from '@nestjs/swagger';
-import { AuthGuard } from 'auth/auth.guard';
+import { ApiHeader, ApiOkResponse, ApiTags } from '@nestjs/swagger';
+
 import { Roles } from 'auth/decorators/roles.decorator';
 import { Role } from 'auth/decorators/roles.enum';
-import { JwtGuard } from 'auth/guards/jwt.guard';
 import constants from 'docs/constants';
+import { ProjectService } from 'project/project.service';
+import { Messages } from 'utils/constants';
 import { GetNFTsDTO } from './dtos/get-nfts';
+import { GetNftsParamsDTO } from './dtos/get-nfts-params';
 import { NftService } from './nft.service';
 
 @Controller('nfts')
 @ApiTags('NFT')
 export class NftController {
-  constructor(private nftService: NftService) {}
+  constructor(
+    private nftService: NftService,
+    private projectService: ProjectService,
+  ) {}
 
-  @Post()
-  @ApiBearerAuth('defaultBearerAuth')
-  @UseGuards(AuthGuard, JwtGuard)
+  @Post(':contract_address')
   @Roles(Role.SuperAdmin, Role.Admin)
+  @ApiHeader({ name: 'app_id', example: '' })
   @ApiOkResponse({
     description: constants.CREATED.description,
     type: GetNFTsDTO,
   })
-  async getNfts(@Body() getNftsDto: GetNFTsDTO, @Req() req) {
+  async getNfts(
+    @Param() getNftsParamsDTO: GetNftsParamsDTO,
+    @Body() getNftsDto: GetNFTsDTO,
+    @Req() req,
+  ) {
     try {
-      const { contract_address, rpc, projectId, fromBlock } = getNftsDto;
+      const { rpc, projectId, fromBlock } = getNftsDto;
+      const { contract_address } = getNftsParamsDTO;
+
+      if (!req.headers?.app_id) {
+        throw new BadRequestException(Messages.AppIdRequired);
+      }
+
+      if (
+        !(await this.projectService.validateAppId(
+          req.headers.app_id,
+          null,
+          projectId,
+        ))
+      ) {
+        throw new Error(Messages.IncorrectAppId);
+      }
+
       const nfts = await this.nftService.getNfts(
-        req?.user.id,
         projectId,
         contract_address,
         rpc,

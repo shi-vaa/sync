@@ -7,7 +7,6 @@ import { UserDetails } from './user-details.interface';
 import { Role } from 'auth/decorators/roles.enum';
 import { ProjectService } from 'project/project.service';
 import { Messages } from 'utils/constants';
-import { use } from 'passport';
 
 @Injectable()
 export class UserService {

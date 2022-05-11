@@ -30,7 +30,9 @@ export class AuthService {
       throw new Error(Messages.UserExists);
     }
 
-    return await this.userService.create(walletAddress, roles, name);
+    const newUser = await this.userService.create(walletAddress, roles, name);
+
+    return newUser;
   }
 
   async validateUser(walletAddress: string): Promise<UserDetails> {
