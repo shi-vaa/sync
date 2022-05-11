@@ -18,7 +18,7 @@ import { AddContractDTO } from './dtos/add-contract';
 export class ContractController {
   constructor(private readonly contractService: ContractService) {}
 
-  @Post('add')
+  @Post('')
   @ApiOkResponse({
     description: constants.OK.description,
     type: AddContractDTO,

@@ -31,7 +31,7 @@ export class ContractService {
     blockRange?: number,
   ) {
     try {
-      const project = this.projectService.findByProjectId(projectId);
+      const project = await this.projectService.findByProjectId(projectId);
 
       if (!project) {
         throw new Error(Messages.ProjectNotFound);
@@ -104,18 +104,6 @@ export class ContractService {
       if (abi.type === abiType.event) {
         const { name } = abi;
         const topic = this.createTopic(abi);
-
-        console.log(
-          name,
-          topic,
-          projectId,
-          chain_id,
-          contract_address,
-          webhook_url,
-          fromBlock,
-          blockRange,
-          abi,
-        );
 
         await this.eventsService.createEvent(
           name,
