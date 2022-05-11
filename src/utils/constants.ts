@@ -8,7 +8,7 @@ export enum Messages {
   NotAnAdmin = 'User is not an admin',
   NotASuperAdmin = 'User is not a super-admin',
   NotAMember = 'User is not a project member',
-  ApiKeyRequired = 'API key is required',
-  InvalidApiKey = 'API key is invalid',
-  IncorrectApiKey = 'API key is incorrect',
+  AppIdRequired = 'APP ID is required',
+  InvalidAppId = 'APP ID is invalid',
+  IncorrectAppId = 'APP ID is incorrect',
 }

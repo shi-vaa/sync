@@ -19,7 +19,6 @@ export class NftService {
   ) {}
 
   async getNfts(
-    userId: string,
     projectId: string,
     contract_address: string,
     rpc: string,
@@ -32,10 +31,6 @@ export class NftService {
 
     if (!project) {
       throw new Error(Messages.ProjectNotFound);
-    }
-
-    if (!(await this.projectService.isUserPartOfProject(userId, projectId))) {
-      throw new Error(Messages.NotAMember);
     }
 
     this.logger

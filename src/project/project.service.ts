@@ -323,7 +323,7 @@ export class ProjectService {
 
   async validateAppId(appId: string, projectName?: string, projectId?: string) {
     if (!uuidValidate(appId)) {
-      throw new Error(Messages.InvalidApiKey);
+      throw new Error(Messages.InvalidAppId);
     }
 
     const project = projectName
@@ -339,5 +339,9 @@ export class ProjectService {
 
   async getAllProjects(): Promise<ProjectDocument[]> {
     return this.projectModel.find();
+  }
+
+  async getAppId(projectId: string) {
+    return (await this.projectModel.findById(projectId)).APP_ID;
   }
 }
