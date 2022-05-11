@@ -135,10 +135,10 @@ export class NftService {
           const eventLog = await model.findOne({
             'data.blockNumber': formattedLog.blockNumber,
           });
+          nfts.push(formattedLog);
 
           if (eventLog) {
             this.logger.logService(process.env.MONGO_URI).warn('Already added');
-            nfts.push(formattedLog);
             continue;
           }
 

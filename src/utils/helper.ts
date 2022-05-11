@@ -13,6 +13,6 @@ export function configureProvider(rpc: string) {
   return new ethers.providers.JsonRpcProvider(rpc);
 }
 
-export function generateAppId() {
+export function generateApiKey() {
   return v4();
 }
