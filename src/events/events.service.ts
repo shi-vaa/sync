@@ -12,7 +12,6 @@ import { Messages } from 'utils/constants';
 import { IEventsSync } from 'utils/interfaces/eventsSync';
 import { createContract, configureProvider } from 'utils/helper';
 import { PinoLoggerService } from 'logger/pino-logger.service';
-import { IAbi } from 'utils/interfaces/abi';
 
 @Injectable()
 export class EventsService {
@@ -25,7 +24,6 @@ export class EventsService {
 
   async createEventsCollectionFromProjectEvents(
     txnHash: string,
-    // abi: IAbi,
     topic: string,
     contract_address: string,
     projectId: string,
