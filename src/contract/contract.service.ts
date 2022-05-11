@@ -105,18 +105,6 @@ export class ContractService {
         const { name } = abi;
         const topic = this.createTopic(abi);
 
-        console.log(
-          name,
-          topic,
-          projectId,
-          chain_id,
-          contract_address,
-          webhook_url,
-          fromBlock,
-          blockRange,
-          abi,
-        );
-
         await this.eventsService.createEvent(
           name,
           topic,
