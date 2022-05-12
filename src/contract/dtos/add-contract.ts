@@ -1,25 +1,26 @@
-import { Prop } from '@nestjs/mongoose';
+import { ApiProperty } from '@nestjs/swagger';
+
 import { IAbi } from 'utils/interfaces/abi';
 
 export class AddContractDTO {
-  @Prop()
+  @ApiProperty()
   abi: IAbi[];
 
-  @Prop()
+  @ApiProperty()
   projectId: string;
 
-  @Prop()
+  @ApiProperty()
   webhook_url: string;
 
-  @Prop()
+  @ApiProperty()
   contract_address: string;
 
-  @Prop()
+  @ApiProperty()
   chain_id: number;
 
-  @Prop()
+  @ApiProperty()
   fromBlock?: number;
 
-  @Prop()
+  @ApiProperty()
   blockRange?: number;
 }
