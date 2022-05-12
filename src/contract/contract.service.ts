@@ -49,18 +49,22 @@ export class ContractService {
       await newContract.save();
 
       for (const item of abi) {
-        await this.createEventFromAbi(
-          item,
-          projectId,
-          webhook_url,
-          contract_address,
-          chain_id,
-          fromBlock,
-          blockRange,
-        );
+        try {
+          await this.createEventFromAbi(
+            item,
+            projectId,
+            webhook_url,
+            contract_address,
+            chain_id,
+            fromBlock,
+            blockRange,
+          );
+        } catch (err) {
+          this.logger.logService(process.env.MONGO_URI).error(err);
+        }
       }
     } catch (err) {
-      this.logger.error(err.message);
+      this.logger.logService(process.env.MONGO_URI).error(err);
     }
   }
 
@@ -121,7 +125,7 @@ export class ContractService {
         );
       }
     } catch (err) {
-      this.logger.error(err.message);
+      throw err;
     }
   }
 
