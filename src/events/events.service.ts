@@ -232,9 +232,11 @@ export class EventsService {
         }
       } else {
         const fragment = ethNftInterface.getEventTopic(event.name);
+
         if (event.blockRange < 2000) {
           const latest = await provider.getBlockNumber();
           for (let i = event.fromBlock; i < latest; i += event.blockRange) {
+
             try {
               const fromBlock = i;
               const toBlock = Math.min(latest, i + (event.blockRange - 1));
