@@ -11,16 +11,25 @@ import { UserService } from 'user/user.service';
 import { EventSchema } from './events.schema';
 import { EventsService } from './events.service';
 import { EventsController } from './events.controller';
+import { ContractModule } from 'contract/contract.module';
+import { ContractService } from 'contract/contract.service';
 
 @Module({
   imports: [
     ConfigModule,
     MongooseModule.forFeature([{ name: 'Event', schema: EventSchema }]),
-    forwardRef(() => UserModule),
     forwardRef(() => ProjectModule),
+    forwardRef(() => UserModule),
+    forwardRef(() => ContractModule),
     LoggerModule,
   ],
-  providers: [EventsService, ProjectService, UserService, PinoLoggerService],
+  providers: [
+    EventsService,
+    ProjectService,
+    UserService,
+    ContractService,
+    PinoLoggerService,
+  ],
   exports: [
     MongooseModule.forFeature([{ name: 'Event', schema: EventSchema }]),
     EventsModule,

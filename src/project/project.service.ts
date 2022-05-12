@@ -9,6 +9,7 @@ import { Messages } from 'utils/constants';
 import { env } from 'types/env';
 import { EventsService } from 'events/events.service';
 import { PinoLoggerService } from 'logger/pino-logger.service';
+import { ContractService } from 'contract/contract.service';
 
 @Injectable()
 export class ProjectService {
@@ -19,6 +20,8 @@ export class ProjectService {
     private readonly userService: UserService,
     @Inject(forwardRef(() => EventsService))
     private readonly eventService: EventsService,
+    @Inject(forwardRef(() => ContractService))
+    private readonly contractService: ContractService,
     private logger: PinoLoggerService,
   ) {}
 
@@ -149,7 +152,7 @@ export class ProjectService {
     }
 
     project.event_ids.forEach(
-      async (id) => await this.eventService.deleteEvent(id.toString()),
+      async (id) => await this.eventService.removeEvent(id.toString()),
     );
     await this.deleteProjectByName(projectName);
   }
@@ -278,7 +281,7 @@ export class ProjectService {
       throw new Error(Messages.NotAMember);
     }
 
-    await this.eventService.deleteEvent(event._id);
+    await this.eventService.removeEvent(event._id);
 
     await this.projectModel.updateOne(
       { _id: projectId },
@@ -343,5 +346,9 @@ export class ProjectService {
 
   async getAppId(projectId: string) {
     return (await this.projectModel.findById(projectId)).APP_ID;
+  }
+
+  async getContracts(projectId: string) {
+    return this.contractService.getContractsForProject(projectId);
   }
 }
