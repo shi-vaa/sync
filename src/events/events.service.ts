@@ -199,15 +199,16 @@ export class EventsService {
 
         const fragment = ethNftInterface.getEventTopic(event.name);
 
-        try {
-          if (lastSyncedBlock.length === 0) {
-            const fragment = ethNftInterface.getEventTopic(event.name);
-            listedEvents = await contract.queryFilter(fragment as any);
-          } else {
-            const latest = await provider.getBlockNumber();
-            const latestInDb = lastSyncedBlock[0].data.blockNumber;
+        // try {
+        if (lastSyncedBlock.length === 0) {
+          const fragment = ethNftInterface.getEventTopic(event.name);
+          listedEvents = await contract.queryFilter(fragment as any);
+        } else {
+          const latest = await provider.getBlockNumber();
+          const latestInDb = lastSyncedBlock[0].data.blockNumber;
 
-            for (let i = latestInDb; i < latest; i += event.blockRange) {
+          for (let i = latestInDb; i < latest; i += event.blockRange) {
+            try {
               const fromBlock = i;
               const toBlock = Math.min(latest, i + (event.blockRange - 1));
               const events = await contract.queryFilter(
@@ -217,25 +218,43 @@ export class EventsService {
               );
 
               listedEvents.push(...events);
+            } catch (err) {
+              this.syncFromNextBlock(
+                i,
+                latest,
+                event.blockRange,
+                contract,
+                fragment,
+                listedEvents,
+              );
             }
           }
-        } catch (err) {
-          this.logger.logService(process.env.MONGO_URI).error(err.message);
         }
       } else {
         const fragment = ethNftInterface.getEventTopic(event.name);
         if (event.blockRange < 2000) {
           const latest = await provider.getBlockNumber();
           for (let i = event.fromBlock; i < latest; i += event.blockRange) {
-            const fromBlock = i;
-            const toBlock = Math.min(latest, i + (event.blockRange - 1));
-            const events = await contract.queryFilter(
-              fragment as any,
-              fromBlock,
-              toBlock,
-            );
+            try {
+              const fromBlock = i;
+              const toBlock = Math.min(latest, i + (event.blockRange - 1));
+              const events = await contract.queryFilter(
+                fragment as any,
+                fromBlock,
+                toBlock,
+              );
 
-            listedEvents.push(...events);
+              listedEvents.push(...events);
+            } catch (err) {
+              this.syncFromNextBlock(
+                i,
+                latest,
+                event.blockRange,
+                contract,
+                fragment,
+                listedEvents,
+              );
+            }
           }
         } else {
           listedEvents = await contract.queryFilter(fragment as any);
@@ -400,5 +419,26 @@ export class EventsService {
         },
       },
     );
+  }
+
+  async syncFromNextBlock(
+    blockNumber: number,
+    toBlock: number,
+    blockRange = 2000,
+    contract: any,
+    fragment: any,
+    listedEvents: any,
+  ) {
+    for (let i = blockNumber + 1; i < toBlock; i += blockRange) {
+      const fromBlock = i;
+      const toBlock = Math.min(fromBlock, i + (blockRange - 1));
+      const events = await contract.queryFilter(
+        fragment as any,
+        fromBlock,
+        toBlock,
+      );
+
+      listedEvents.push(...events);
+    }
   }
 }
