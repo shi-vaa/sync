@@ -202,10 +202,28 @@ export class EventsService {
         try {
           if (lastSyncedBlock.length === 0) {
             const fragment = ethNftInterface.getEventTopic(event.name);
+            console.log('syncing from 0 for: ', event.name);
             listedEvents = await contract.queryFilter(fragment as any);
+
+            // const latest = await provider.getBlockNumber();
+            // for (let i = event.fromBlock; i < latest; i += event.blockRange) {
+            //   const fromBlock = i;
+            //   const toBlock = Math.min(latest, i + (event.blockRange - 1));
+            //   const events = await contract.queryFilter(
+            //     fragment as any,
+            //     fromBlock,
+            //     toBlock,
+            //   );
+
+            //   listedEvents.push(...events);
+            // }
+
+            // console.log('syncing from ', event.fromBlock, ' for: ', event.name);
           } else {
             const latest = await provider.getBlockNumber();
             const latestInDb = lastSyncedBlock[0].data.blockNumber;
+
+            console.log('syncing from : ', latestInDb, ' for: ', event.name);
 
             for (let i = latestInDb; i < latest; i += event.blockRange) {
               const fromBlock = i;
@@ -225,6 +243,8 @@ export class EventsService {
       } else {
         const fragment = ethNftInterface.getEventTopic(event.name);
         if (event.blockRange < 2000) {
+          console.log('syncing from : ', event.fromBlock, ' for: ', event.name);
+
           const latest = await provider.getBlockNumber();
           for (let i = event.fromBlock; i < latest; i += event.blockRange) {
             const fromBlock = i;
@@ -239,6 +259,7 @@ export class EventsService {
           }
         } else {
           listedEvents = await contract.queryFilter(fragment as any);
+          console.log('syncing from 0 for: ', event.name);
         }
       }
     } catch (err) {

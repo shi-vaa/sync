@@ -3,9 +3,7 @@ import {
   Controller,
   Post,
   InternalServerErrorException,
-  UseGuards,
   Req,
-  UnauthorizedException,
   Param,
   BadRequestException,
 } from '@nestjs/common';
