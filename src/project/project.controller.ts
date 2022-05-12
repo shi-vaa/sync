@@ -255,7 +255,7 @@ export class ProjectController {
   }
 
   @Get('contracts/:projectId')
-  @ApiHeader({ name: 'app_id', example: '' })
+  @ApiHeader({ name: 'app-id', example: '' })
   @ApiOkResponse({
     description: constants.OK.description,
     type: GetContractsDTO,
@@ -271,13 +271,13 @@ export class ProjectController {
     try {
       const { projectId } = getContractsDTO;
 
-      if (!req.headers?.app_id) {
+      if (!req.headers['app-id']) {
         throw new BadRequestException(Messages.AppIdRequired);
       }
 
       if (
         !(await this.projectService.validateAppId(
-          req.headers.app_id,
+          req.headers['app-id'],
           null,
           projectId,
         ))
