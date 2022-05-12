@@ -4,8 +4,6 @@ import {
   Controller,
   Delete,
   forwardRef,
-  Header,
-  Headers,
   Inject,
   Post,
   Req,
@@ -17,7 +15,6 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import constants from 'docs/constants';
-import { logger } from 'ethers';
 import { PinoLoggerService } from 'logger/pino-logger.service';
 import { BadRequestDTO } from 'project/dtos/error';
 import { ProjectService } from 'project/project.service';
@@ -37,7 +34,7 @@ export class ContractController {
   ) {}
 
   @Post('')
-  @ApiHeader({ name: 'app_id', example: '' })
+  @ApiHeader({ name: 'app-id', example: '' })
   @ApiOkResponse({
     description: constants.OK.description,
     type: AddContractDTO,
@@ -46,10 +43,7 @@ export class ContractController {
     description: constants.BAD_REQUEST.description,
     type: BadRequestDTO,
   })
-  async addContract(
-    @Body() addContractDto: AddContractDTO,
-    @Headers() headers: Record<string, string>,
-  ) {
+  async addContract(@Body() addContractDto: AddContractDTO, @Req() req) {
     try {
       const {
         abi,
@@ -61,15 +55,13 @@ export class ContractController {
         blockRange,
       } = addContractDto;
 
-      logger.info(headers);
-
-      if (!headers['app_id']) {
+      if (!req.headers['app-id']) {
         throw new BadRequestException(Messages.AppIdRequired);
       }
 
       if (
         !(await this.projectService.validateAppId(
-          headers["app_id"],
+          req.headers['app-id'],
           null,
           projectId,
         ))
@@ -92,7 +84,7 @@ export class ContractController {
   }
 
   @Delete('')
-  @ApiHeader({ name: 'app_id', example: '' })
+  @ApiHeader({ name: 'app-id', example: '' })
   @ApiOkResponse({
     description: constants.OK.description,
     type: RemoveContractDTO,
@@ -108,13 +100,13 @@ export class ContractController {
     try {
       const { projectId, contract_address } = removeContractDTO;
 
-      if (!req.headers?.app_id) {
+      if (!req.headers['app-id']) {
         throw new BadRequestException(Messages.AppIdRequired);
       }
 
       if (
         !(await this.projectService.validateAppId(
-          req.headers.app_id,
+          req.headers['app-id'],
           null,
           projectId,
         ))
