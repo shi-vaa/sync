@@ -28,7 +28,7 @@ export class NftController {
 
   @Post(':contract_address')
   @Roles(Role.SuperAdmin, Role.Admin)
-  @ApiHeader({ name: 'app_id', example: '' })
+  @ApiHeader({ name: 'app-id', example: '' })
   @ApiOkResponse({
     description: constants.CREATED.description,
     type: GetNFTsDTO,
@@ -42,13 +42,13 @@ export class NftController {
       const { rpc, projectId, fromBlock } = getNftsDto;
       const { contract_address } = getNftsParamsDTO;
 
-      if (!req.headers?.app_id) {
+      if (!req.headers['app-id']) {
         throw new BadRequestException(Messages.AppIdRequired);
       }
 
       if (
         !(await this.projectService.validateAppId(
-          req.headers.app_id,
+          req.headers['app-id'],
           null,
           projectId,
         ))
