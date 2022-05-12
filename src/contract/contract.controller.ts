@@ -4,6 +4,8 @@ import {
   Controller,
   Delete,
   forwardRef,
+  Header,
+  Headers,
   Inject,
   Post,
   Req,
@@ -44,7 +46,10 @@ export class ContractController {
     description: constants.BAD_REQUEST.description,
     type: BadRequestDTO,
   })
-  async addContract(@Body() addContractDto: AddContractDTO, @Req() req) {
+  async addContract(
+    @Body() addContractDto: AddContractDTO,
+    @Headers() headers: Record<string, string>,
+  ) {
     try {
       const {
         abi,
@@ -56,15 +61,15 @@ export class ContractController {
         blockRange,
       } = addContractDto;
 
-      logger.info(req.headers);
+      logger.info(headers);
 
-      if (!req.headers?.app_id) {
+      if (!headers['app_id']) {
         throw new BadRequestException(Messages.AppIdRequired);
       }
 
       if (
         !(await this.projectService.validateAppId(
-          req.headers.app_id,
+          headers["app_id"],
           null,
           projectId,
         ))
