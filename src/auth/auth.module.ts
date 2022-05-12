@@ -13,6 +13,8 @@ import { ProjectModule } from 'project/project.module';
 import { EventsModule } from 'events/events.module';
 import { EventsService } from 'events/events.service';
 import { LoggerModule } from 'logger/logger.module';
+import { ContractModule } from 'contract/contract.module';
+import { ContractService } from 'contract/contract.service';
 
 @Module({
   imports: [
@@ -20,6 +22,7 @@ import { LoggerModule } from 'logger/logger.module';
     UserModule,
     EventsModule,
     ProjectModule,
+    ContractModule,
     PassportModule.register({ defaultStrategy: 'jwt' }),
     JwtModule.register({ secret: process.env.TOKEN_SECRET }),
   ],
@@ -28,6 +31,7 @@ import { LoggerModule } from 'logger/logger.module';
     AuthService,
     UserService,
     ProjectService,
+    ContractService,
     JwtGuard,
     JwtStrategy,
     RolesGuard,

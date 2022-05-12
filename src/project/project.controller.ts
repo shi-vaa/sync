@@ -18,6 +18,7 @@ import {
   ApiBadRequestResponse,
   ApiBearerAuth,
   ApiCreatedResponse,
+  ApiHeader,
   ApiOkResponse,
   ApiTags,
 } from '@nestjs/swagger';
@@ -38,6 +39,8 @@ import { AddProjectMemberDTO } from './dtos/add-project-member';
 import { RemoveProjectMemberDTO } from './dtos/remove-project-member';
 import { UpdateEventDTO } from './dtos/update-project-event';
 import { GetAppIdDTO } from './dtos/get-app-id';
+import { GetContractsDTO } from './dtos/get-contracts';
+import { Messages } from 'utils/constants';
 
 @Controller('projects')
 @ApiTags('projects')
@@ -251,20 +254,38 @@ export class ProjectController {
     }
   }
 
-  @Get('/app_id')
+  @Get('contracts/:projectId')
+  @ApiHeader({ name: 'app_id', example: '' })
   @ApiOkResponse({
     description: constants.OK.description,
-    type: GetAppIdDTO,
+    type: GetContractsDTO,
   })
   @ApiBadRequestResponse({
     description: constants.BAD_REQUEST.description,
     type: BadRequestDTO,
   })
-  async getAppID(@Query() getAppIdDto: GetAppIdDTO) {
+  async getContractsForProject(
+    @Param() getContractsDTO: GetContractsDTO,
+    @Req() req,
+  ) {
     try {
-      const { projectId } = getAppIdDto;
+      const { projectId } = getContractsDTO;
 
-      return this.projectService.getAppId(projectId);
+      if (!req.headers?.app_id) {
+        throw new BadRequestException(Messages.AppIdRequired);
+      }
+
+      if (
+        !(await this.projectService.validateAppId(
+          req.headers.app_id,
+          null,
+          projectId,
+        ))
+      ) {
+        throw new Error(Messages.IncorrectAppId);
+      }
+
+      return await this.projectService.getContracts(projectId);
     } catch (err) {
       throw new BadRequestException(err.message);
     }

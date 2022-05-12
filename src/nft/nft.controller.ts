@@ -20,7 +20,7 @@ import { GetNftsParamsDTO } from './dtos/get-nfts-params';
 import { NftService } from './nft.service';
 
 @Controller('nfts')
-@ApiTags('NFT')
+@ApiTags('NFTs')
 export class NftController {
   constructor(
     private nftService: NftService,

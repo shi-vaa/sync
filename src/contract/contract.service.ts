@@ -1,8 +1,10 @@
-import { Injectable } from '@nestjs/common';
+import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
+import { EventsModule } from 'events/events.module';
 import { EventsService } from 'events/events.service';
 import { PinoLoggerService } from 'logger/pino-logger.service';
 import { Model } from 'mongoose';
+import { ProjectModule } from 'project/project.module';
 import { ProjectService } from 'project/project.service';
 import { Messages } from 'utils/constants';
 import { abiType, IAbi } from 'utils/interfaces/abi';
@@ -14,6 +16,7 @@ export class ContractService {
   constructor(
     @InjectModel('Contract')
     private readonly contractModel: Model<ContractDocument>,
+    @Inject(forwardRef(() => ProjectService))
     private readonly projectService: ProjectService,
     private readonly eventsService: EventsService,
     private readonly logger: PinoLoggerService,
@@ -120,5 +123,14 @@ export class ContractService {
     } catch (err) {
       this.logger.error(err.message);
     }
+  }
+
+  async removeContract(contract_address: string) {
+    await this.contractModel.findOneAndDelete({ contract_address });
+    await this.eventsService.removeEventsByContractAddress(contract_address);
+  }
+
+  async getContractsForProject(projectId: string): Promise<ContractDocument[]> {
+    return this.contractModel.find({ projectId });
   }
 }

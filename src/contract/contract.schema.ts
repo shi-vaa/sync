@@ -14,6 +14,9 @@ class Contract {
 
   @Prop({ required: true })
   abi: IAbi[];
+
+  @Prop()
+  _constructor: string;
 }
 
 export const ContractSchema = SchemaFactory.createForClass(Contract);
