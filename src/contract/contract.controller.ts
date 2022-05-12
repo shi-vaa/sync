@@ -15,6 +15,8 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import constants from 'docs/constants';
+import { logger } from 'ethers';
+import { PinoLoggerService } from 'logger/pino-logger.service';
 import { BadRequestDTO } from 'project/dtos/error';
 import { ProjectService } from 'project/project.service';
 import { Messages } from 'utils/constants';
@@ -29,6 +31,7 @@ export class ContractController {
     private readonly contractService: ContractService,
     @Inject(forwardRef(() => ProjectService))
     private readonly projectService: ProjectService,
+    private readonly logger: PinoLoggerService,
   ) {}
 
   @Post('')
@@ -52,6 +55,8 @@ export class ContractController {
         fromBlock,
         blockRange,
       } = addContractDto;
+
+      logger.info(req.headers);
 
       if (!req.headers?.app_id) {
         throw new BadRequestException(Messages.AppIdRequired);
