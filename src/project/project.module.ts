@@ -10,6 +10,8 @@ import { EventSchema } from 'events/events.schema';
 import { EventsModule } from 'events/events.module';
 import { EventsService } from 'events/events.service';
 import { LoggerModule } from 'logger/logger.module';
+import { ContractModule } from 'contract/contract.module';
+import { ContractService } from 'contract/contract.service';
 
 @Module({
   imports: [
@@ -17,10 +19,11 @@ import { LoggerModule } from 'logger/logger.module';
     MongooseModule.forFeature([{ name: 'Event', schema: EventSchema }]),
     forwardRef(() => UserModule),
     forwardRef(() => EventsModule),
+    forwardRef(() => ContractModule),
     LoggerModule,
   ],
   controllers: [ProjectController],
-  providers: [ProjectService, UserService, EventsService],
+  providers: [ProjectService, UserService, EventsService, ContractService],
   exports: [
     ProjectModule,
     MongooseModule.forFeature([{ name: 'Project', schema: ProjectSchema }]),

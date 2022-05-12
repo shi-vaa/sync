@@ -1,4 +1,6 @@
 import { Module } from '@nestjs/common';
+import { ContractModule } from 'contract/contract.module';
+import { ContractService } from 'contract/contract.service';
 
 import { EventsModule } from 'events/events.module';
 import { EventsService } from 'events/events.service';
@@ -12,12 +14,19 @@ import { NftController } from './nft.controller';
 import { NftService } from './nft.service';
 
 @Module({
-  imports: [EventsModule, UserModule, ProjectModule, LoggerModule],
+  imports: [
+    EventsModule,
+    UserModule,
+    ProjectModule,
+    ContractModule,
+    LoggerModule,
+  ],
   providers: [
     NftService,
     EventsService,
     UserService,
     ProjectService,
+    ContractService,
     PinoLoggerService,
   ],
   controllers: [NftController],
