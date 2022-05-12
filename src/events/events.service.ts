@@ -316,8 +316,21 @@ export class EventsService {
     return this.eventsModel.findOne({ name, projectId });
   }
 
-  async deleteEvent(eventId: string) {
+  async removeEvent(eventId: string) {
     await this.eventsModel.findByIdAndDelete(eventId);
+  }
+
+  async findByContractAddress(contract_address: string) {
+    return this.eventsModel.find({ contract_address });
+  }
+
+  async removeEventsByContractAddress(contract_address) {
+    const events = await this.findByContractAddress(contract_address);
+    for (const event of events) {
+      await this.eventsModel.findOneAndDelete({
+        contract_address: event.contract_address,
+      });
+    }
   }
 
   async createEvent(

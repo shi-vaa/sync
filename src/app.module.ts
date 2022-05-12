@@ -23,6 +23,7 @@ import { ContractModule } from './contract/contract.module';
 import { NftController } from './nft/nft.controller';
 import { NftService } from './nft/nft.service';
 import { NftModule } from './nft/nft.module';
+import { ContractService } from 'contract/contract.service';
 
 @Module({
   imports: [
@@ -34,9 +35,9 @@ import { NftModule } from './nft/nft.module';
     EventsModule,
     UserModule,
     AuthModule,
+    ContractModule,
     ProjectModule,
     UtilsModule,
-    ContractModule,
     NftModule,
   ],
   controllers: [
@@ -50,6 +51,7 @@ import { NftModule } from './nft/nft.module';
     AppService,
     AuthService,
     UserService,
+    ContractService,
     ProjectService,
     EventsService,
     NftService,

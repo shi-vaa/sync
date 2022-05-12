@@ -2,23 +2,37 @@ import {
   BadRequestException,
   Body,
   Controller,
-  HttpCode,
-  HttpStatus,
+  Delete,
+  forwardRef,
+  Inject,
   Post,
+  Req,
 } from '@nestjs/common';
-import { ApiBadRequestResponse, ApiOkResponse, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBadRequestResponse,
+  ApiHeader,
+  ApiOkResponse,
+  ApiTags,
+} from '@nestjs/swagger';
 import constants from 'docs/constants';
 import { BadRequestDTO } from 'project/dtos/error';
-import { IAbi } from 'utils/interfaces/abi';
+import { ProjectService } from 'project/project.service';
+import { Messages } from 'utils/constants';
 import { ContractService } from './contract.service';
 import { AddContractDTO } from './dtos/add-contract';
+import { RemoveContractDTO } from './dtos/remove-contract';
 
 @Controller('contracts')
 @ApiTags('contracts')
 export class ContractController {
-  constructor(private readonly contractService: ContractService) {}
+  constructor(
+    private readonly contractService: ContractService,
+    @Inject(forwardRef(() => ProjectService))
+    private readonly projectService: ProjectService,
+  ) {}
 
-  @Post('add')
+  @Post('')
+  @ApiHeader({ name: 'app_id', example: '' })
   @ApiOkResponse({
     description: constants.OK.description,
     type: AddContractDTO,
@@ -27,7 +41,7 @@ export class ContractController {
     description: constants.BAD_REQUEST.description,
     type: BadRequestDTO,
   })
-  async addContract(@Body() addContractDto: AddContractDTO) {
+  async addContract(@Body() addContractDto: AddContractDTO, @Req() req) {
     try {
       const {
         abi,
@@ -39,6 +53,20 @@ export class ContractController {
         blockRange,
       } = addContractDto;
 
+      if (!req.headers?.app_id) {
+        throw new BadRequestException(Messages.AppIdRequired);
+      }
+
+      if (
+        !(await this.projectService.validateAppId(
+          req.headers.app_id,
+          null,
+          projectId,
+        ))
+      ) {
+        throw new Error(Messages.IncorrectAppId);
+      }
+
       await this.contractService.addContract(
         abi,
         projectId,
@@ -48,6 +76,43 @@ export class ContractController {
         fromBlock,
         blockRange,
       );
+    } catch (err) {
+      throw new BadRequestException(err.message);
+    }
+  }
+
+  @Delete('')
+  @ApiHeader({ name: 'app_id', example: '' })
+  @ApiOkResponse({
+    description: constants.OK.description,
+    type: RemoveContractDTO,
+  })
+  @ApiBadRequestResponse({
+    description: constants.BAD_REQUEST.description,
+    type: BadRequestDTO,
+  })
+  async removeContract(
+    @Body() removeContractDTO: RemoveContractDTO,
+    @Req() req,
+  ) {
+    try {
+      const { projectId, contract_address } = removeContractDTO;
+
+      if (!req.headers?.app_id) {
+        throw new BadRequestException(Messages.AppIdRequired);
+      }
+
+      if (
+        !(await this.projectService.validateAppId(
+          req.headers.app_id,
+          null,
+          projectId,
+        ))
+      ) {
+        throw new Error(Messages.IncorrectAppId);
+      }
+
+      await this.contractService.removeContract(contract_address);
     } catch (err) {
       throw new BadRequestException(err.message);
     }

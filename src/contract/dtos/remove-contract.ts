@@ -1,6 +1,9 @@
 import { ApiProperty } from '@nestjs/swagger';
 
-export class GetEventsDTO {
+export class RemoveContractDTO {
+  @ApiProperty()
+  contract_address: string;
+
   @ApiProperty()
   projectId: string;
 }

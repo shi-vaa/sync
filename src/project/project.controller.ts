@@ -2,6 +2,7 @@ import {
   BadRequestException,
   Body,
   Controller,
+  Delete,
   Get,
   HttpCode,
   HttpStatus,
@@ -36,16 +37,17 @@ import { Roles } from 'auth/decorators/roles.decorator';
 import { Role } from 'auth/decorators/roles.enum';
 import { AddProjectMemberDTO } from './dtos/add-project-member';
 import { RemoveProjectMemberDTO } from './dtos/remove-project-member';
-import { Messages } from 'utils/constants';
 import { UpdateEventDTO } from './dtos/update-project-event';
 import { GetAppIdDTO } from './dtos/get-app-id';
+import { GetContractsDTO } from './dtos/get-contracts';
+import { Messages } from 'utils/constants';
 
 @Controller('projects')
 @ApiTags('projects')
 export class ProjectController {
   constructor(private projectService: ProjectService) {}
 
-  @Post('add')
+  @Post('')
   @ApiBearerAuth('defaultBearerAuth')
   @UseGuards(AuthGuard, JwtGuard)
   @Roles(Role.SuperAdmin, Role.Admin)
@@ -76,7 +78,7 @@ export class ProjectController {
     }
   }
 
-  @Post('remove')
+  @Delete('')
   @ApiBearerAuth('defaultBearerAuth')
   @UseGuards(AuthGuard, JwtGuard)
   @Roles(Role.SuperAdmin, Role.Admin)
@@ -102,7 +104,7 @@ export class ProjectController {
     }
   }
 
-  @Get('info/:projectName')
+  @Get(':projectName')
   @ApiBearerAuth('defaultBearerAuth')
   @UseGuards(AuthGuard, JwtGuard)
   @Roles(Role.SuperAdmin, Role.Member, Role.Admin)
@@ -128,7 +130,7 @@ export class ProjectController {
     }
   }
 
-  @Post('/events/add')
+  @Post('events')
   @ApiBearerAuth('defaultBearerAuth')
   @UseGuards(AuthGuard, JwtGuard)
   @Roles(Role.SuperAdmin, Role.Member, Role.Admin)
@@ -168,7 +170,7 @@ export class ProjectController {
     }
   }
 
-  @Post('/events/remove')
+  @Delete('events')
   @ApiBearerAuth('defaultBearerAuth')
   @UseGuards(AuthGuard, JwtGuard)
   @Roles(Role.SuperAdmin, Role.Member, Role.Admin)
@@ -189,7 +191,7 @@ export class ProjectController {
     }
   }
 
-  @Patch('/events/update')
+  @Patch('/events')
   @ApiBearerAuth('defaultBearerAuth')
   @UseGuards(AuthGuard, JwtGuard)
   @Roles(Role.SuperAdmin, Role.Member, Role.Admin)
@@ -212,7 +214,7 @@ export class ProjectController {
     }
   }
 
-  @Post('/members/add')
+  @Post('/members')
   @ApiBearerAuth('defaultBearerAuth')
   @UseGuards(AuthGuard, JwtGuard)
   @Roles(Role.SuperAdmin, Role.Admin)
@@ -232,7 +234,7 @@ export class ProjectController {
     }
   }
 
-  @Post('/members/remove')
+  @Delete('/members')
   @ApiBearerAuth('defaultBearerAuth')
   @UseGuards(AuthGuard, JwtGuard)
   @Roles(Role.SuperAdmin, Role.Admin)
@@ -252,20 +254,38 @@ export class ProjectController {
     }
   }
 
-  @Get('/app_id')
+  @Get('contracts/:projectId')
+  @ApiHeader({ name: 'app_id', example: '' })
   @ApiOkResponse({
     description: constants.OK.description,
-    type: GetAppIdDTO,
+    type: GetContractsDTO,
   })
   @ApiBadRequestResponse({
     description: constants.BAD_REQUEST.description,
     type: BadRequestDTO,
   })
-  async getAppID(@Query() getAppIdDto: GetAppIdDTO) {
+  async getContractsForProject(
+    @Param() getContractsDTO: GetContractsDTO,
+    @Req() req,
+  ) {
     try {
-      const { projectId } = getAppIdDto;
+      const { projectId } = getContractsDTO;
 
-      return this.projectService.getAppId(projectId);
+      if (!req.headers?.app_id) {
+        throw new BadRequestException(Messages.AppIdRequired);
+      }
+
+      if (
+        !(await this.projectService.validateAppId(
+          req.headers.app_id,
+          null,
+          projectId,
+        ))
+      ) {
+        throw new Error(Messages.IncorrectAppId);
+      }
+
+      return await this.projectService.getContracts(projectId);
     } catch (err) {
       throw new BadRequestException(err.message);
     }

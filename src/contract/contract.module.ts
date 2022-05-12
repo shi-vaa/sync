@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 
 import { ContractService } from './contract.service';
@@ -16,15 +16,15 @@ import { UserService } from 'user/user.service';
 @Module({
   imports: [
     MongooseModule.forFeature([{ name: 'Contract', schema: ContractSchema }]),
-    UserModule,
-    ProjectModule,
-    EventsModule,
+    forwardRef(() => ProjectModule),
+    forwardRef(() => UserModule),
+    forwardRef(() => EventsModule),
     LoggerModule,
   ],
   providers: [
     ContractService,
-    UserService,
     ProjectService,
+    UserService,
     EventsService,
     PinoLoggerService,
   ],
