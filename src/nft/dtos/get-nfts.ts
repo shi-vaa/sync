@@ -9,4 +9,7 @@ export class GetNFTsDTO {
 
   @ApiProperty()
   fromBlock: number;
+
+  @ApiProperty()
+  toBlock: number;
 }

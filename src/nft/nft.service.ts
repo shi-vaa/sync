@@ -18,14 +18,15 @@ export class NftService {
     private logger: PinoLoggerService,
   ) {}
 
-  async getNfts(
+  async syncNfts(
     projectId: string,
     contract_address: string,
     rpc: string,
     fromBlock: number,
+    toBlock: number,
   ) {
     const address = '0x0000000000000000000000000000000000000000';
-    const listOfEvents = [];
+    let listOfEvents = [];
     const project = await this.projectService.findByProjectId(projectId);
     const nfts = [];
 
@@ -49,7 +50,7 @@ export class NftService {
       const fragment = ethNftInterface.getEventTopic('Transfer');
       const latest = await provider.getBlockNumber();
 
-      for (let i = fromBlock; i < latest; i += 2000) {
+      for (let i = fromBlock; i <= toBlock; i += 2000) {
         const _fromBlock = i;
         const toBlock = Math.min(latest, i + 1999);
         const events = await contract.queryFilter(
@@ -78,74 +79,133 @@ export class NftService {
         );
 
         for (const log of txnLogs) {
-          const parsedLog = ethNftInterface.parseLog(log);
+          try {
+            const parsedLog = ethNftInterface.parseLog(log);
 
-          const metadata = await abi.methods
-            .tokenURI(parsedLog.args.tokenId.toString())
-            .call();
+            const metadata = await abi.methods
+              .tokenURI(parsedLog.args.tokenId.toString())
+              .call();
 
-          const response = await axios.get(metadata);
+            const response = await axios.get(metadata);
 
-          const formattedLog = {
-            metadata: JSON.stringify(response.data),
-            tokenId: parsedLog.args.tokenId.toString(),
-            blockNumber: log.blockNumber,
-          };
+            const formattedLog = {
+              metadata: JSON.stringify(response.data),
+              tokenId: parsedLog.args.tokenId.toString(),
+              blockNumber: log.blockNumber,
+            };
 
-          const isBurnEvent = parsedLog.args['to'] === address;
-          const isMintEvent = parsedLog.args['from'] === address;
+            const isBurnEvent = parsedLog.args['to'] === address;
+            const isMintEvent = parsedLog.args['from'] === address;
 
-          if (!isBurnEvent && !isMintEvent) {
+            if (!isBurnEvent && !isMintEvent) {
+              continue;
+            } else if (isBurnEvent) {
+              formattedLog['owner_of'] = parsedLog.args.from;
+            } else {
+              formattedLog['owner_of'] = parsedLog.args.to;
+            }
+
+            const schema = new mongoose.Schema({
+              data: { type: Object },
+            });
+
+            const collectionName = `${project.name}_${contract_address}`;
+
+            let model;
+
+            await mongoose
+              .connect(process.env.MONGO_URI)
+              .catch((err) =>
+                this.logger.logService(process.env.MONGO_URI).error(err),
+              );
+
+            if (mongoose.models[`${collectionName}`]) {
+              model = mongoose.model<IEventsSync>(collectionName);
+            } else {
+              model = mongoose.model<IEventsSync>(
+                collectionName,
+                schema,
+                collectionName,
+              );
+            }
+
+            const eventLog = await model.findOne({
+              'data.blockNumber': formattedLog.blockNumber,
+            });
+            nfts.push(formattedLog);
+
+            if (eventLog) {
+              this.logger
+                .logService(process.env.MONGO_URI)
+                .warn('Already added');
+              continue;
+            }
+
+            const collection = new model({
+              data: { ...formattedLog },
+            });
+            await collection.save();
+          } catch (err) {
+            this.logger.logService(process.env.MONGO_URI).error(err.message);
             continue;
-          } else if (isBurnEvent) {
-            formattedLog['owner_of'] = parsedLog.args.from;
-          } else {
-            formattedLog['owner_of'] = parsedLog.args.to;
           }
-
-          const schema = new mongoose.Schema({
-            data: { type: Object },
-          });
-
-          const collectionName = `${project.name}_${contract_address}`;
-
-          let model;
-
-          await mongoose
-            .connect(process.env.MONGO_URI)
-            .catch((err) =>
-              this.logger.logService(process.env.MONGO_URI).error(err),
-            );
-
-          if (mongoose.models[`${collectionName}`]) {
-            model = mongoose.model<IEventsSync>(collectionName);
-          } else {
-            model = mongoose.model<IEventsSync>(
-              collectionName,
-              schema,
-              collectionName,
-            );
-          }
-
-          const eventLog = await model.findOne({
-            'data.blockNumber': formattedLog.blockNumber,
-          });
-          nfts.push(formattedLog);
-
-          if (eventLog) {
-            this.logger.logService(process.env.MONGO_URI).warn('Already added');
-            continue;
-          }
-
-          const collection = new model({
-            data: { ...formattedLog },
-          });
-          await collection.save();
         }
       }
     } catch (err) {
       this.logger.logService(process.env.MONGO_URI).error(err.message);
     }
     return nfts;
+  }
+
+  async getNfts(
+    projectId: string,
+    contract_address: string,
+    rpc: string,
+    fromBlock: number,
+    toBlock: number,
+  ) {
+    try {
+      const project = await this.projectService.findByProjectId(projectId);
+      const collectionName = `${project.name}_${contract_address}`;
+
+      if (!project) {
+        throw new Error(Messages.ProjectNotFound);
+      }
+
+      await mongoose
+        .connect(process.env.MONGO_URI)
+        .catch((err) =>
+          this.logger.logService(process.env.MONGO_URI).error(err),
+        );
+
+      const conn = mongoose.connection;
+      let model;
+
+      const collectionExists = await conn.db.collections().then((arg) => {
+        return arg.find(
+          (coll) => coll.namespace.split('.')[1] === collectionName,
+        );
+      });
+
+      if (!collectionExists) {
+        return this.syncNfts(
+          projectId,
+          contract_address,
+          rpc,
+          fromBlock,
+          toBlock,
+        );
+      } else {
+        const schema = new mongoose.Schema({
+          data: { type: Object },
+        });
+
+        // const model = mongoose.model(collectionName, schema, collectionName);
+
+        return model.find();
+      }
+    } catch (err) {
+      this.logger.logService(process.env.MONGO_URI).error(err.message);
+    }
   }
 }
