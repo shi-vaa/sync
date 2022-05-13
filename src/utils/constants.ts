@@ -11,4 +11,5 @@ export enum Messages {
   AppIdRequired = 'APP ID is required',
   InvalidAppId = 'APP ID is invalid',
   IncorrectAppId = 'APP ID is incorrect',
+  NftsSynced = 'Synced NFTs',
 }
