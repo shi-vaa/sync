@@ -24,6 +24,8 @@ export class NftService {
     rpc: string,
     fromBlock: number,
     toBlock: number,
+    networkName?: string,
+    chain_id?: number,
   ) {
     const address = '0x0000000000000000000000000000000000000000';
     let listOfEvents = [];
@@ -39,7 +41,10 @@ export class NftService {
       .info(`Fetching NFTs for contract: ${contract_address}`);
 
     try {
-      const provider = configureProvider(rpc);
+      const provider =
+        networkName && chain_id
+          ? configureProvider(rpc, { name: networkName, chainId: chain_id })
+          : configureProvider(rpc);
       const contract = createContract(
         contract_address,
         'event Transfer(address indexed from,address indexed to,uint256 value)',
@@ -109,7 +114,7 @@ export class NftService {
               data: { type: Object },
             });
 
-            const collectionName = `${project.name}_${contract_address}`;
+            const collectionName = `nfts_${contract_address}`;
 
             let model;
 
@@ -163,10 +168,12 @@ export class NftService {
     rpc: string,
     fromBlock: number,
     toBlock: number,
+    networkName?: string,
+    chain_id?: number,
   ) {
     try {
       const project = await this.projectService.findByProjectId(projectId);
-      const collectionName = `${project.name}_${contract_address}`;
+      const collectionName = `nfts_${contract_address}`;
 
       if (!project) {
         throw new Error(Messages.ProjectNotFound);
@@ -194,13 +201,15 @@ export class NftService {
           rpc,
           fromBlock,
           toBlock,
+          networkName,
+          chain_id,
         );
       } else {
         const schema = new mongoose.Schema({
           data: { type: Object },
         });
 
-        // const model = mongoose.model(collectionName, schema, collectionName);
+        const model = mongoose.model(collectionName, schema, collectionName);
 
         return model.find();
       }

@@ -29,6 +29,12 @@ class Project {
 
   @Prop({ required: true, unique: true })
   APP_ID: string;
+
+  @Prop({ required: true })
+  chain_id: number;
+
+  @Prop({ required: true })
+  networkName: string;
 }
 
 export const ProjectSchema = SchemaFactory.createForClass(Project);

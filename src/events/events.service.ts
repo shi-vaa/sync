@@ -123,7 +123,6 @@ export class EventsService {
     for (const event of events) {
       const { projectId } = event;
       const project = await this.projectService.findByProjectId(projectId);
-      const provider = configureProvider(project.rpcs[0]);
 
       this.syncEvent(projectId, event);
     }
@@ -135,7 +134,10 @@ export class EventsService {
     const collectionName = `${project.name}_${event.contract_address}`;
 
     try {
-      const provider = configureProvider(project.rpcs[0]);
+      const provider = configureProvider(project.rpcs[0], {
+        name: project.networkName,
+        chainId: project.chain_id,
+      });
 
       if (!project) {
         throw new Error(Messages.ProjectNotFound);
@@ -199,7 +201,6 @@ export class EventsService {
 
         const fragment = ethNftInterface.getEventTopic(event.name);
 
-        // try {
         if (lastSyncedBlock.length === 0) {
           const fragment = ethNftInterface.getEventTopic(event.name);
           listedEvents = await contract.queryFilter(fragment as any);
@@ -279,7 +280,10 @@ export class EventsService {
     const projects = await this.projectService.getAllProjects();
 
     projects.forEach((project) => {
-      const provider = configureProvider(project.rpcs[0]);
+      const provider = configureProvider(project.rpcs[0], {
+        name: project.networkName,
+        chainId: project.chain_id,
+      });
 
       project.event_ids.forEach(async (eventId) => {
         const event = await this.findByEventId(eventId.toString());
