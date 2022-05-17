@@ -20,13 +20,13 @@ export class UserService {
     return {
       id: user._id,
       name: user?.name,
-      walletAddress: user.walletAddress,
+      email: user.email,
       roles: user.roles,
     };
   }
 
-  async findByWalletAddress(walletAddress: string): Promise<UserDocument> {
-    return this.userModel.findOne({ walletAddress }).exec();
+  async findByEmail(email: string): Promise<UserDocument> {
+    return this.userModel.findOne({ email }).exec();
   }
 
   async findByUserId(id: string): Promise<UserDocument> {
@@ -34,11 +34,12 @@ export class UserService {
   }
 
   async create(
-    walletAddress: string,
+    email: string,
+    password: string,
     roles: string[],
     name?: string,
   ): Promise<UserDocument> {
-    const newUser = new this.userModel({ walletAddress, roles, name });
+    const newUser = new this.userModel({ email, password, roles, name });
     return newUser.save();
   }
 
@@ -88,8 +89,8 @@ export class UserService {
     }
   }
 
-  async deleteUserByWalletAddress(walletAddress: string) {
-    await this.userModel.findOneAndDelete({ walletAddress }).exec();
+  async deleteUserByEmail(email: string) {
+    await this.userModel.findOneAndDelete({ email }).exec();
   }
 
   async deleteUserById(userId: string) {
@@ -114,9 +115,9 @@ export class UserService {
     );
   }
 
-  async getAllUserProjects(walletAddress: string) {
+  async getAllUserProjects(email: string) {
     const projects = [];
-    const user = await this.findByWalletAddress(walletAddress);
+    const user = await this.findByEmail(email);
 
     if (!user) {
       throw new Error(Messages.UserNotFound);

@@ -28,7 +28,7 @@ export class NftService {
     chain_id?: number,
   ) {
     const address = '0x0000000000000000000000000000000000000000';
-    let listOfEvents = [];
+    const listOfEvents = [];
     const project = await this.projectService.findByProjectId(projectId);
     const nfts = [];
 
