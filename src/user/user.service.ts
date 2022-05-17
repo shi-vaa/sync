@@ -36,10 +36,14 @@ export class UserService {
   async create(
     email: string,
     password: string,
-    roles: string[],
     name?: string,
   ): Promise<UserDocument> {
-    const newUser = new this.userModel({ email, password, roles, name });
+    const newUser = new this.userModel({
+      email,
+      password,
+      roles: Role.Member,
+      name,
+    });
     return newUser.save();
   }
 
