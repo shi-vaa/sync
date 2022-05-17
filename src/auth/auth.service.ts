@@ -19,7 +19,7 @@ export class AuthService {
     user: Readonly<NewUserDTO>,
   ): Promise<{ _id: string; email: string; roles: Role[]; name?: string }> {
     let name;
-    const { email, password, roles } = user;
+    const { email, password } = user;
 
     if (user?.name) {
       name = user.name;
@@ -31,7 +31,7 @@ export class AuthService {
       throw new Error(Messages.UserExists);
     }
 
-    const newUser = await this.userService.create(email, password, roles, name);
+    const newUser = await this.userService.create(email, password, name);
 
     return {
       _id: newUser._id,
