@@ -9,7 +9,4 @@ export class NewUserDTO {
 
   @ApiProperty()
   password: string;
-
-  @ApiProperty()
-  roles: string[];
 }
