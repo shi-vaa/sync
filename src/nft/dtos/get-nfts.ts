@@ -12,4 +12,10 @@ export class GetNFTsDTO {
 
   @ApiProperty()
   toBlock: number;
+
+  @ApiProperty()
+  networkName?: string;
+
+  @ApiProperty()
+  chain_id?: number;
 }

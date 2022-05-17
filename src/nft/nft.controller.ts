@@ -39,7 +39,8 @@ export class NftController {
     @Req() req,
   ) {
     try {
-      const { rpc, projectId, fromBlock, toBlock } = getNftsDto;
+      const { rpc, projectId, fromBlock, toBlock, networkName, chain_id } =
+        getNftsDto;
       const { contract_address } = getNftsParamsDTO;
 
       if (!req.headers['app-id']) {
@@ -56,12 +57,14 @@ export class NftController {
         throw new Error(Messages.IncorrectAppId);
       }
 
-      return await this.nftService.syncNfts(
+      return await this.nftService.getNfts(
         projectId,
         contract_address,
         rpc,
         fromBlock,
         toBlock,
+        networkName,
+        chain_id,
       );
     } catch (err) {
       throw new InternalServerErrorException(err.message);
@@ -81,7 +84,8 @@ export class NftController {
     @Req() req,
   ) {
     try {
-      const { rpc, projectId, fromBlock, toBlock } = getNftsDto;
+      const { rpc, projectId, fromBlock, toBlock, networkName, chain_id } =
+        getNftsDto;
       const { contract_address } = getNftsParamsDTO;
 
       if (!req.headers['app-id']) {
@@ -104,6 +108,8 @@ export class NftController {
         rpc,
         fromBlock,
         toBlock,
+        networkName,
+        chain_id,
       );
 
       return Messages.NftsSynced;

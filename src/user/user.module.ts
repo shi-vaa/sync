@@ -1,7 +1,8 @@
 import { forwardRef, Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
+import bcrypt from 'bcryptjs';
 
-import { UserSchema } from './user.schema';
+import { User, UserSchema } from './user.schema';
 import { UserService } from './user.service';
 import { ProjectModule } from 'project/project.module';
 import { ProjectService } from 'project/project.service';
@@ -14,7 +15,23 @@ import { ContractService } from 'contract/contract.service';
 
 @Module({
   imports: [
-    MongooseModule.forFeature([{ name: 'User', schema: UserSchema }]),
+    MongooseModule.forFeatureAsync([
+      {
+        name: 'User',
+        useFactory: () => {
+          const schema = UserSchema;
+
+          schema.pre<User>('save', async function () {
+            const salt = await bcrypt.genSalt(10);
+            const hashedPassword = await bcrypt.hash(this.password, salt);
+
+            this.password = hashedPassword;
+          });
+
+          return schema;
+        },
+      },
+    ]),
     forwardRef(() => ProjectModule),
     forwardRef(() => EventsModule),
     forwardRef(() => ContractModule),
