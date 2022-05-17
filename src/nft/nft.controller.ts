@@ -57,7 +57,8 @@ export class NftController {
         throw new Error(Messages.IncorrectAppId);
       }
 
-      return await this.nftService.getNfts(
+      
+      return await this.nftService.syncNfts(
         projectId,
         contract_address,
         rpc,
