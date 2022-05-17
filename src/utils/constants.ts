@@ -1,5 +1,6 @@
 export enum Messages {
   ProjectNotFound = 'Project does not exist',
+  IncorrectPassword = 'Password is incorrect',
   UserNotFound = 'User does not exist',
   UserExists = 'User already exists',
   EventNotFound = 'Event does not exist',

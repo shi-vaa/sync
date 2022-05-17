@@ -40,9 +40,9 @@ export class UserController {
     description: constants.BAD_REQUEST.description,
     type: BadRequestDTO,
   })
-  async getAllUserProjects(@Query('walletAddress') walletAddress: string) {
+  async getAllUserProjects(@Query('email') email: string) {
     try {
-      return await this.userService.getAllUserProjects(walletAddress);
+      return await this.userService.getAllUserProjects(email);
     } catch (err) {
       throw new BadRequestException(err.message);
     }

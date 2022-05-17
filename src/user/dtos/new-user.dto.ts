@@ -5,7 +5,10 @@ export class NewUserDTO {
   name?: string;
 
   @ApiProperty()
-  walletAddress: string;
+  email: string;
+
+  @ApiProperty()
+  password: string;
 
   @ApiProperty()
   roles: string[];
