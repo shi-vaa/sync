@@ -2,7 +2,7 @@ import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import mongoose from 'mongoose';
-import { ethers } from 'ethers';
+import { Contract, ethers } from 'ethers';
 import axios from 'axios';
 
 import { getWeb3 } from 'utils/web3';
@@ -285,12 +285,20 @@ export class EventsService {
         chainId: project.chain_id,
       });
 
+      provider.on('error', (err) =>
+        this.logger.logService(process.env.MONGO_URI).info(err),
+      );
+
       project.event_ids.forEach(async (eventId) => {
         const event = await this.findByEventId(eventId.toString());
 
         if (!event) {
           throw new Error(Messages.EventNotFound);
         }
+
+        this.logger
+          .logService(process.env.MONGO_URI)
+          .info(`Attaching event listener for ${event.name}`);
 
         const contract = createContract(
           event.contract_address,
@@ -386,6 +394,8 @@ export class EventsService {
       });
 
       newEvent = await newEvent.save();
+
+      await this.projectService.pushEventId(projectId, newEvent._id.toString());
 
       await this.syncEvent(projectId, newEvent);
 
