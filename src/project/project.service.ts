@@ -36,7 +36,7 @@ export class ProjectService {
     const user = await this.userService.findByUserId(userId);
 
     if (existingProject) {
-      throw new Error(Messages.ProjectNotFound);
+      throw new Error(Messages.ProjectExists);
     }
 
     if (!user) {

@@ -86,15 +86,26 @@ export class NftService {
         for (const log of txnLogs) {
           try {
             const parsedLog = ethNftInterface.parseLog(log);
+            let metadataUrl;
+            let response;
 
-            const metadata = await abi.methods
-              .tokenURI(parsedLog.args.tokenId.toString())
-              .call();
+            try {
+              metadataUrl = await abi.methods
+                .tokenURI(parsedLog.args.tokenId.toString())
+                .call();
 
-            const response = await axios.get(metadata);
+              response = await axios.get(metadataUrl);
+            } catch (err) {
+              this.logger
+                .logService(process.env.MONGO_URI)
+                .warn(
+                  "Couldn't fetch metadata for nft id: ",
+                  parsedLog.args.tokenId.toString(),
+                );
+            }
 
             const formattedLog = {
-              metadata: JSON.stringify(response.data),
+              metadata: JSON.stringify(response?.data) || null,
               tokenId: parsedLog.args.tokenId.toString(),
               blockNumber: log.blockNumber,
             };
