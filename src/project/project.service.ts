@@ -209,7 +209,6 @@ export class ProjectService {
   }
 
   async addEvent(
-    userId: string,
     projectId: string,
     name: string,
     topic: string,
@@ -220,10 +219,16 @@ export class ProjectService {
     fromBlock = 0,
     blockRange = 1000,
     sync_historical_data = false,
+    userId?: string,
   ) {
     const project = await this.findByProjectId(projectId);
     const existingEvent = await this.eventService.getEvent(name, projectId);
-    const user = this.userService.findByUserId(userId);
+    if (userId) {
+      const user = this.userService.findByUserId(userId);
+      if (!user) {
+        throw new Error(Messages.UserNotFound);
+      }
+    }
 
     if (existingEvent) {
       throw new Error(Messages.EventExists);
@@ -231,10 +236,6 @@ export class ProjectService {
 
     if (!project) {
       throw new Error(Messages.ProjectNotFound);
-    }
-
-    if (!user) {
-      throw new Error(Messages.UserNotFound);
     }
 
     if (!(await this.isUserPartOfProject(userId, projectId))) {
@@ -350,5 +351,12 @@ export class ProjectService {
 
   async getContracts(projectId: string) {
     return this.contractService.getContractsForProject(projectId);
+  }
+
+  async pushEventId(projectId: string, eventId: string) {
+    await this.projectModel.updateOne(
+      { _id: projectId },
+      { $push: { event_ids: eventId } },
+    );
   }
 }
