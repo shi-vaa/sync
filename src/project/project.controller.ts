@@ -152,7 +152,6 @@ export class ProjectController {
       } = addEventDetails;
 
       await this.projectService.addEvent(
-        req?.user.id,
         projectId,
         name,
         topic,
@@ -163,6 +162,7 @@ export class ProjectController {
         fromBlock,
         blockRange,
         sync_historical_data,
+        req?.user.id,
       );
     } catch (err) {
       throw new BadRequestException(err.message);
