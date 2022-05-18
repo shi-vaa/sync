@@ -38,7 +38,6 @@ import { Role } from 'auth/decorators/roles.enum';
 import { AddProjectMemberDTO } from './dtos/add-project-member';
 import { RemoveProjectMemberDTO } from './dtos/remove-project-member';
 import { UpdateEventDTO } from './dtos/update-project-event';
-import { GetAppIdDTO } from './dtos/get-app-id';
 import { GetContractsDTO } from './dtos/get-contracts';
 import { Messages } from 'utils/constants';
 
